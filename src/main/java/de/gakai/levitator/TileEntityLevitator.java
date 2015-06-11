@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
@@ -97,7 +98,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         {
             int playerCount = 0;
             Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
-            for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
+            for (Object o : Minecraft.getMinecraft().theWorld.playerEntities)
             {
                 EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
