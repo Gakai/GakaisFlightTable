@@ -29,8 +29,6 @@ public class BlockLevitator extends BlockContainer
         }
     };
 
-    public static final Block instance = new BlockLevitator();
-
     private IIcon iconTop;
 
     private IIcon iconBottom;

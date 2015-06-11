@@ -3,6 +3,7 @@ package de.gakai.levitator;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -27,6 +28,8 @@ public class LevitatorMod
     @Instance(MODID)
     public static LevitatorMod instance;
 
+    public static final Block levitator = new BlockLevitator();
+
     public static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
     public static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
@@ -34,15 +37,15 @@ public class LevitatorMod
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-        fuels.put(Items.feather, 12000);
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
-
         FMLCommonHandler.instance().bus().register(this);
 
-        GameRegistry.registerBlock(BlockLevitator.instance, BlockLevitator.instance.getUnlocalizedName());
+        fuels.put(Items.feather, 12000);
+
+        GameRegistry.registerBlock(levitator, levitator.getUnlocalizedName());
         GameRegistry.registerTileEntity(TileEntityLevitator.class, LevitatorMod.MODID);
 
-        GameRegistry.addShapedRecipe(new ItemStack(BlockLevitator.instance), //
+        GameRegistry.addShapedRecipe(new ItemStack(levitator), //
                 "dod", //
                 "ogo", //
                 "dod", //
