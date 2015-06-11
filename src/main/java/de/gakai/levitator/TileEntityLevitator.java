@@ -24,28 +24,23 @@ import cofh.api.energy.IEnergyReceiver;
 
 // import cpw.mods.fml.common.Optional;
 
-// @Optional.Interface(iface = "cofh.api.energy.IEnergyReceiver", modid = "ThermalExpansion", striprefs = true)
 public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
 
     public static final int MAX_POWER = 50000;
-
     public static final int TICK_POWER_DRAIN = 10;
-
-    private static final int TICK_POWER = TICK_POWER_DRAIN * 20;
+    public static final int TICK_POWER = TICK_POWER_DRAIN * 20;
 
     public static boolean verticalLimit = false;
 
     private static Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
-
-    private static Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectedBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
+    private static Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
 
     /********************************************************************************/
 
     public ItemStack[] inventory = new ItemStack[2];
 
     private int power = 0;
-
     private int powerPerTick = 0;
 
     protected boolean isPowered = false;
@@ -72,9 +67,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                     addPlayer(player);
                 }
                 else
-                {
                     removePlayer(player, true);
-                }
             }
             if (power < 0)
                 power = 0;
@@ -118,11 +111,11 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     private void addPlayer(EntityPlayer player)
     {
-        Set<TileEntityLevitator> affectedBlocks = playerAffectedBlocks.get(player);
+        Set<TileEntityLevitator> affectedBlocks = playerAffectingBlocks.get(player);
         if (affectedBlocks == null)
         {
             affectedBlocks = new HashSet<TileEntityLevitator>();
-            playerAffectedBlocks.put(player, affectedBlocks);
+            playerAffectingBlocks.put(player, affectedBlocks);
         }
         // Only affect players that were not in fly-mode to begin with
         if (!player.capabilities.allowFlying)
@@ -138,16 +131,15 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     private void removePlayer(EntityPlayer player, boolean safe)
     {
-        Set<TileEntityLevitator> affectedBlocks = playerAffectedBlocks.get(player);
+        Set<TileEntityLevitator> affectingBlocks = playerAffectingBlocks.get(player);
         // Check if the player is or was affected by a levitator
-        if (affectedBlocks != null)
+        if (affectingBlocks != null)
         {
             // Remove this levitator from the set
-            affectedBlocks.remove(this);
+            affectingBlocks.remove(this);
 
             // If no more levitators affect the player, start disabling flying
-            if (affectedBlocks.isEmpty())
-            {
+            if (affectingBlocks.isEmpty())
                 if (affectedPlayers.contains(player))
                 {
                     // Player was set into fly mode by levitators
@@ -156,16 +148,13 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                     {
                         player.capabilities.allowFlying = false;
                         affectedPlayers.remove(player);
-                        playerAffectedBlocks.remove(player);
+                        playerAffectingBlocks.remove(player);
                     }
                     player.sendPlayerAbilities();
                 }
                 else
-                {
                     // Player was already in fly mode before so just clear old data
-                    playerAffectedBlocks.remove(player);
-                }
-            }
+                    playerAffectingBlocks.remove(player);
         }
     }
 

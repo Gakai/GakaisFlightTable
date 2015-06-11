@@ -42,6 +42,14 @@ public class BlockLevitator extends BlockContainer
         setBlockName("levitator");
         setCreativeTab(CreativeTabs.tabTransport);
         setBlockTextureName(LevitatorMod.ASSETS + ":levitator_side");
+        setLightOpacity(0);
+        setLightLevel(0.5f);
+    }
+
+    @Override
+    public boolean isOpaqueCube()
+    {
+        return false;
     }
 
     @Override
