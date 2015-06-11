@@ -27,6 +27,9 @@ import de.gakai.levitator.gui.GuiHandler;
 public class LevitatorMod
 {
 
+    // FIXME: Shift-click on a feather while a redstone feather is in the slot, increases the redstone feather stack
+    // XXX: Shift-right clicking with a feather adds it into the container, if it fits
+
     public static final String MODID = "GakaisLevitator";
     public static final String VERSION = "0.1";
     public static final String ASSETS = "levitator";
@@ -45,8 +48,13 @@ public class LevitatorMod
             .setCreativeTab(CreativeTabs.tabTransport) //
             .setTextureName(ASSETS + ":redstoneFeather");
 
-    public static final Item creativeFeather = new Item() //
-            .setFull3D() //
+    public static final Item creativeFeather = new Item() {
+        @Override
+        public boolean hasEffect(ItemStack par1ItemStack, int pass)
+        {
+            return true;
+        };
+    }.setFull3D() //
             .setUnlocalizedName("creativeFeather") //
             .setCreativeTab(CreativeTabs.tabTransport) //
             .setTextureName(ASSETS + ":creativeFeather") //

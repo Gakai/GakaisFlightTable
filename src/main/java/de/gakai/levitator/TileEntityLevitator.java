@@ -31,7 +31,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     public static int POWER_PER_PLAYER = 10;
     public static int POWER_PER_TICK = 1;
     public static double RANGE_PER_UPGRADE = 0.5;
-    public static double POWER_PER_UPGRADE = 0.0625; // fix per tick
+    public static double POWER_PER_UPGRADE = 0.0625; // fix value per tick
     public static Shape shape = Shape.SPHERE;
     public static final int MAX_TICK_POWER_RECEIVE = 800;
 
@@ -188,11 +188,6 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     public int getPowerConsumption()
     {
-        // TODO: Make power consumption relative to the range upgrade
-        // --> Greater range = more power consumption
-        // This will make it easy to use the block for building projects / bases, but make
-        // it harder to exploit for moving through the world
-        // TODO: It might also be interesting to use more power the farther away the player is
         return POWER_PER_PLAYER;
     }
 
