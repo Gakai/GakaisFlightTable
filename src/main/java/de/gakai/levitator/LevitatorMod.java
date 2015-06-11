@@ -1,5 +1,6 @@
 package de.gakai.levitator;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.config.Configuration;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -32,17 +34,17 @@ public class LevitatorMod
     public static final Block levitator = new BlockLevitator();
 
     public static final Item redstoneFeather = new Item() //
-            .setFull3D() //
-            .setUnlocalizedName("redstoneFeather") //
-            .setCreativeTab(CreativeTabs.tabTransport) //
-            .setTextureName(ASSETS + ":redstoneFeather");
+    .setFull3D() //
+    .setUnlocalizedName("redstoneFeather") //
+    .setCreativeTab(CreativeTabs.tabTransport) //
+    .setTextureName(ASSETS + ":redstoneFeather");
 
     public static final Item creativeFeather = new Item() //
-            .setFull3D() //
-            .setUnlocalizedName("creativeFeather") //
-            .setCreativeTab(CreativeTabs.tabTransport) //
-            .setTextureName(ASSETS + ":creativeFeather") //
-            .setMaxStackSize(1);
+    .setFull3D() //
+    .setUnlocalizedName("creativeFeather") //
+    .setCreativeTab(CreativeTabs.tabTransport) //
+    .setTextureName(ASSETS + ":creativeFeather") //
+    .setMaxStackSize(1);
 
     private static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
@@ -53,6 +55,13 @@ public class LevitatorMod
     {
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
         FMLCommonHandler.instance().bus().register(this);
+
+        Configuration config = new Configuration(new File("config/Levitator.cfg"));
+        TileEntityLevitator.MAX_POWER = config.get("Levitator", "MaxPower", TileEntityLevitator.MAX_POWER).getInt();
+        TileEntityLevitator.POWER_PER_PLAYER = config.get("Levitator", "PowerPerPlayer", TileEntityLevitator.POWER_PER_PLAYER).getInt();
+        TileEntityLevitator.POWER_PER_TICK = config.get("Levitator", "PowerPerTick", TileEntityLevitator.POWER_PER_TICK).getInt();
+        TileEntityLevitator.shape = Shape.valueOf(config.get("Levitator", "shape", TileEntityLevitator.shape.toString().toLowerCase()).getString()
+                .toUpperCase());
 
         GameRegistry.registerItem(redstoneFeather, "redstoneFeather");
         GameRegistry.registerItem(creativeFeather, "creativeFeather");

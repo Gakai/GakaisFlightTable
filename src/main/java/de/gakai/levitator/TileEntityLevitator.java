@@ -27,11 +27,11 @@ import cofh.api.energy.IEnergyReceiver;
 public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
 
-    public static final int MAX_POWER = 50000;
-    public static final int TICK_POWER_DRAIN = 10;
-    public static final int TICK_POWER = TICK_POWER_DRAIN * 20;
-
-    public static boolean verticalLimit = false;
+    public static int MAX_POWER = 50000;
+    public static int POWER_PER_PLAYER = 10;
+    public static int POWER_PER_TICK = 1;
+    public static Shape shape = Shape.SPHERE;
+    public static final int MAX_TICK_POWER_RECEIVE = 800;
 
     private static Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
     private static Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
@@ -41,7 +41,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     public ItemStack[] inventory = new ItemStack[2];
 
     private int power = 0;
-    private int powerPerTick = 0;
+    private int powerReceivablePerTick = 0;
 
     protected boolean isPowered = false;
 
@@ -50,20 +50,19 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     @Override
     public void updateEntity()
     {
-        powerPerTick = TICK_POWER;
+        powerReceivablePerTick = MAX_TICK_POWER_RECEIVE;
         if (!worldObj.isRemote)
         {
-            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
+            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5);
             for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
             {
                 EntityPlayer player = (EntityPlayer) o;
-                Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
-                double dist = playerPos.distanceTo(blockPos);
+                Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
 
-                if (isActive() && dist < getRadius())
+                if (isActive() && shape.contains(blockPos, getRadius(), playerPos))
                 {
                     if (player.capabilities.isFlying)
-                        power -= getPowerConsumption(dist);
+                        power -= getPowerConsumption();
                     addPlayer(player);
                 }
                 else
@@ -90,16 +89,17 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         else
         {
             int playerCount = 0;
-            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
+            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5);
             for (Object o : Minecraft.getMinecraft().theWorld.playerEntities)
             {
                 EntityPlayer player = (EntityPlayer) o;
-                Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
-                double dist = playerPos.distanceTo(blockPos);
-                if (isActive() && dist < getRadius() && player.capabilities.isFlying)
+                Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
+                if (isActive() && shape.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
                     playerCount++;
             }
-            power = Math.max(0, power - playerCount * TICK_POWER_DRAIN);
+            power -= getPowerConsumption();
+            if (power < 0)
+                power = 0;
         }
     }
 
@@ -175,14 +175,14 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         return power;
     }
 
-    public int getPowerConsumption(double distance)
+    public int getPowerConsumption()
     {
         // TODO: Make power consumption relative to the range upgrade
         // --> Greater range = more power consumption
         // This will make it easy to use the block for building projects / bases, but make
         // it harder to exploit for moving through the world
         // TODO: It might also be interesting to use more power the farther away the player is
-        return TICK_POWER_DRAIN;
+        return POWER_PER_PLAYER;
     }
 
     /********************************************************************************/
@@ -364,11 +364,11 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     @Override
     public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate)
     {
-        int received = Math.min(powerPerTick, Math.min(MAX_POWER - power, maxReceive));
+        int received = Math.min(powerReceivablePerTick, Math.min(MAX_POWER - power, maxReceive));
         if (!simulate && received > 0)
         {
             power += received;
-            powerPerTick -= received;
+            powerReceivablePerTick -= received;
             worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
         }
         return received;
