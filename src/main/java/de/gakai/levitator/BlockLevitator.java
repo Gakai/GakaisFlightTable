@@ -15,13 +15,12 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.ForgeDirection;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 public class BlockLevitator extends BlockContainer
 {
-
-    public static final int MAX_POWER = 50000;
 
     public static final Material material = new Material(MapColor.obsidianColor) {
         {
@@ -58,7 +57,7 @@ public class BlockLevitator extends BlockContainer
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int metadata)
     {
-        return side == 0 ? iconBottom : side != 1 ? blockIcon : iconTop;
+        return side == ForgeDirection.DOWN.ordinal() ? iconBottom : side != ForgeDirection.UP.ordinal() ? blockIcon : iconTop;
     }
 
     @Override

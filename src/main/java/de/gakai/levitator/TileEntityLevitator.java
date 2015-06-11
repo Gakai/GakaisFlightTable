@@ -18,11 +18,20 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.util.ForgeDirection;
+import cofh.api.energy.IEnergyReceiver;
 
-public class TileEntityLevitator extends TileEntity implements ISidedInventory
+// import cpw.mods.fml.common.Optional;
+
+// @Optional.Interface(iface = "cofh.api.energy.IEnergyReceiver", modid = "ThermalExpansion", striprefs = true)
+public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
 
-    public static int POWER_PER_PLAYER_TICK = 10;
+    public static final int MAX_POWER = 50000;
+
+    public static final int TICK_POWER_DRAIN = 10;
+
+    private static final int TICK_POWER = TICK_POWER_DRAIN * 20;
 
     public static boolean verticalLimit = false;
 
@@ -34,7 +43,9 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 
     public ItemStack[] inventory = new ItemStack[2];
 
-    private int fuel = 0;
+    private int power = 0;
+
+    private int powerPerTick = 0;
 
     protected boolean isPowered = false;
 
@@ -43,6 +54,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
     @Override
     public void updateEntity()
     {
+        powerPerTick = TICK_POWER;
         if (!worldObj.isRemote)
         {
             Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
@@ -55,7 +67,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
                 if (isActive() && dist < getRadius())
                 {
                     if (player.capabilities.isFlying)
-                        fuel -= getFuelConsumption(dist);
+                        power -= getPowerConsumption(dist);
                     addPlayer(player);
                 }
                 else
@@ -63,23 +75,20 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
                     removePlayer(player, true);
                 }
             }
-            if (fuel < 0)
-                fuel = 0;
+            if (power < 0)
+                power = 0;
 
             // Process refill
             boolean doUpdate = false;
-            if (inventory[0] != null && LevitatorMod.isItemFuel(inventory[0]))
+            Integer fuelValue = LevitatorMod.getFuelValue(inventory[0]);
+            if (fuelValue != null && power + fuelValue <= MAX_POWER)
             {
-                Integer fuelValue = LevitatorMod.fuels.get(inventory[0].getItem());
-                if (fuelValue != null && fuel + fuelValue <= BlockLevitator.MAX_POWER)
-                {
-                    fuel += fuelValue;
-                    if (inventory[0].getItem() != LevitatorMod.creativeFeather)
-                        --inventory[0].stackSize;
-                    doUpdate = true;
-                    if (inventory[0].stackSize == 0)
-                        inventory[0] = inventory[0].getItem().getContainerItem(inventory[0]);
-                }
+                power += fuelValue;
+                if (inventory[0].getItem() != LevitatorMod.creativeFeather)
+                    --inventory[0].stackSize;
+                if (inventory[0].stackSize == 0)
+                    inventory[0] = inventory[0].getItem().getContainerItem(inventory[0]);
+                doUpdate = true;
             }
             if (doUpdate || worldObj.getWorldInfo().getWorldTotalTime() % 40 == 0)
                 worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
@@ -96,7 +105,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
                 if (isActive() && dist < getRadius() && player.capabilities.isFlying)
                     playerCount++;
             }
-            fuel = Math.max(0, fuel - playerCount * POWER_PER_PLAYER_TICK);
+            power = Math.max(0, power - playerCount * TICK_POWER_DRAIN);
         }
     }
 
@@ -163,7 +172,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 
     public boolean isActive()
     {
-        return fuel > 0 && !isPowered;
+        return power > 0 && !isPowered;
     }
 
     public double getRadius()
@@ -171,19 +180,19 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
         return 8 + 0.5 * (inventory[1] == null ? 0 : inventory[1].stackSize);
     }
 
-    public int getFuel()
+    public int getPower()
     {
-        return fuel;
+        return power;
     }
 
-    public int getFuelConsumption(double distance)
+    public int getPowerConsumption(double distance)
     {
-        // TODO: Make fuel consumption relative to the range upgrade
+        // TODO: Make power consumption relative to the range upgrade
         // --> Greater range = more power consumption
         // This will make it easy to use the block for building projects / bases, but make
         // it harder to exploit for moving through the world
-        // TODO: It might also be interesting to use more fuel the farther away the player is
-        return POWER_PER_PLAYER_TICK;
+        // TODO: It might also be interesting to use more power the farther away the player is
+        return TICK_POWER_DRAIN;
     }
 
     /********************************************************************************/
@@ -206,7 +215,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
             }
         }
         data.setTag("inv", invList);
-        data.setInteger("fuel", fuel);
+        data.setInteger("fuel", power);
         data.setBoolean("powered", isPowered);
     }
 
@@ -238,7 +247,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
                 inventory[slot] = ItemStack.loadItemStackFromNBT(slotTag);
         }
 
-        fuel = data.getInteger("fuel");
+        power = data.getInteger("fuel");
         isPowered = data.getBoolean("powered");
     }
 
@@ -352,6 +361,39 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
     public boolean canExtractItem(int slot, ItemStack item, int site)
     {
         return true;
+    }
+
+    /*********************************************************************************************/
+
+    @Override
+    public boolean canConnectEnergy(ForgeDirection from)
+    {
+        return true;
+    }
+
+    @Override
+    public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate)
+    {
+        int received = Math.min(powerPerTick, Math.min(MAX_POWER - power, maxReceive));
+        if (!simulate && received > 0)
+        {
+            power += received;
+            powerPerTick -= received;
+            worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+        }
+        return received;
+    }
+
+    @Override
+    public int getEnergyStored(ForgeDirection from)
+    {
+        return power;
+    }
+
+    @Override
+    public int getMaxEnergyStored(ForgeDirection from)
+    {
+        return MAX_POWER;
     }
 
 }

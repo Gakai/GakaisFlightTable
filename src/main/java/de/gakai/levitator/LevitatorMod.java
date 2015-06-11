@@ -44,9 +44,9 @@ public class LevitatorMod
             .setTextureName(ASSETS + ":creativeFeather") //
             .setMaxStackSize(1);
 
-    public static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
+    private static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
-    public static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
+    private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
 
     @EventHandler
     public void init(FMLInitializationEvent event)
@@ -82,6 +82,11 @@ public class LevitatorMod
     public static boolean isItemFuel(ItemStack item)
     {
         return LevitatorMod.fuels.containsKey(item.getItem());
+    }
+
+    public static Integer getFuelValue(ItemStack fuelStack)
+    {
+        return fuelStack == null ? null : fuels.get(fuelStack.getItem());
     }
 
     public static boolean isItemUpgrade(ItemStack item)
