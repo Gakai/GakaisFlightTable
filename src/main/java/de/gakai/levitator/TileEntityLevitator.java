@@ -1,11 +1,12 @@
 package de.gakai.levitator;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -25,7 +26,9 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 
     public static boolean verticalLimit = false;
 
-    private static Set<EntityPlayer> previousFlyState = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
+    private static Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
+
+    private static Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectedBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
 
     /********************************************************************************/
 
@@ -42,24 +45,29 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
     {
         if (!worldObj.isRemote)
         {
-            boolean doUpdate = false;
-            int playerCount = 0;
             Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
             for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
             {
-                EntityPlayerMP player = (EntityPlayerMP) o;
+                EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
                 double dist = playerPos.distanceTo(blockPos);
+
                 if (isActive() && dist < getRadius())
                 {
-                    setFlying(player, true);
                     if (player.capabilities.isFlying)
-                        playerCount++;
+                        fuel -= getFuelConsumption(dist);
+                    addPlayer(player);
                 }
                 else
-                    setFlying(player, false);
+                {
+                    removePlayer(player, true);
+                }
             }
-            fuel = Math.max(0, fuel - playerCount * POWER_PER_PLAYER_TICK);
+            if (fuel < 0)
+                fuel = 0;
+
+            // Process refill
+            boolean doUpdate = false;
             if (inventory[0] != null && LevitatorMod.isItemFuel(inventory[0]))
             {
                 Integer fuelValue = LevitatorMod.fuels.get(inventory[0].getItem());
@@ -81,7 +89,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
             Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
             for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
             {
-                EntityPlayerMP player = (EntityPlayerMP) o;
+                EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
                 double dist = playerPos.distanceTo(blockPos);
                 if (isActive() && dist < getRadius() && player.capabilities.isFlying)
@@ -91,33 +99,90 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
         }
     }
 
+    public void onBreak()
+    {
+        for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
+            removePlayer((EntityPlayer) o, false);
+    }
+
+    private void addPlayer(EntityPlayer player)
+    {
+        Set<TileEntityLevitator> affectedBlocks = playerAffectedBlocks.get(player);
+        if (affectedBlocks == null)
+        {
+            affectedBlocks = new HashSet<TileEntityLevitator>();
+            playerAffectedBlocks.put(player, affectedBlocks);
+        }
+        // Only affect players that were not in fly-mode to begin with
+        if (!player.capabilities.allowFlying)
+        {
+            affectedPlayers.add(player);
+            player.capabilities.allowFlying = true;
+            player.capabilities.isFlying = true;
+            player.sendPlayerAbilities();
+        }
+        // Remember our block affects this player
+        affectedBlocks.add(this);
+    }
+
+    private void removePlayer(EntityPlayer player, boolean safe)
+    {
+        Set<TileEntityLevitator> affectedBlocks = playerAffectedBlocks.get(player);
+        // Check if the player is or was affected by a levitator
+        if (affectedBlocks != null)
+        {
+            // Remove this levitator from the set
+            affectedBlocks.remove(this);
+
+            // If no more levitators affect the player, start disabling flying
+            if (affectedBlocks.isEmpty())
+            {
+                if (affectedPlayers.contains(player))
+                {
+                    // Player was set into fly mode by levitators
+                    player.capabilities.isFlying = false;
+                    if (player.onGround || !safe)
+                    {
+                        player.capabilities.allowFlying = false;
+                        affectedPlayers.remove(player);
+                        playerAffectedBlocks.remove(player);
+                    }
+                    player.sendPlayerAbilities();
+                }
+                else
+                {
+                    // Player was already in fly mode before so just clear old data
+                    playerAffectedBlocks.remove(player);
+                }
+            }
+        }
+    }
+
+    /********************************************************************************/
+
+    public boolean isActive()
+    {
+        return fuel > 0 && !isPowered;
+    }
+
     public double getRadius()
     {
         return 8 + 0.5 * (inventory[1] == null ? 0 : inventory[1].stackSize);
     }
 
-    private void setFlying(EntityPlayerMP player, boolean value)
+    public int getFuel()
     {
-        if (value)
-        {
-            if (!player.capabilities.allowFlying)
-            {
-                previousFlyState.add(player);
-                player.capabilities.allowFlying = true;
-                player.sendPlayerAbilities();
-            }
+        return fuel;
+    }
 
-        }
-        else if (previousFlyState.contains(player))
-        {
-            player.capabilities.isFlying = false;
-            if (player.onGround)
-            {
-                player.capabilities.allowFlying = false;
-                previousFlyState.remove(player);
-            }
-            player.sendPlayerAbilities();
-        }
+    public int getFuelConsumption(double distance)
+    {
+        // TODO: Make fuel consumption relative to the range upgrade
+        // --> Greater range = more power consumption
+        // This will make it easy to use the block for building projects / bases, but make
+        // it harder to exploit for moving through the world
+        // TODO: It might also be interesting to use more fuel the farther away the player is
+        return POWER_PER_PLAYER_TICK;
     }
 
     /********************************************************************************/
@@ -286,36 +351,6 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
     public boolean canExtractItem(int slot, ItemStack item, int site)
     {
         return true;
-    }
-
-    public int getFuel()
-    {
-        return fuel;
-    }
-
-    public boolean isActive()
-    {
-        return fuel > 0 && !isPowered;
-    }
-
-    public void onBreak()
-    {
-        Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
-        for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
-        {
-            EntityPlayerMP player = (EntityPlayerMP) o;
-            if (!previousFlyState.contains(player))
-                continue;
-
-            Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
-            double dist = playerPos.distanceTo(blockPos);
-            if (isActive() && dist < getRadius())
-            {
-                player.capabilities.isFlying = false;
-                player.capabilities.allowFlying = false;
-                player.sendPlayerAbilities();
-            }
-        }
     }
 
 }

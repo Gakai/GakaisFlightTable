@@ -21,8 +21,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class BlockLevitator extends BlockContainer
 {
 
-    public static final Block instance = new BlockLevitator();
-
     public static final int MAX_POWER = 50000;
 
     public static final Material material = new Material(MapColor.obsidianColor) {
@@ -30,6 +28,8 @@ public class BlockLevitator extends BlockContainer
             setImmovableMobility();
         }
     };
+
+    public static final Block instance = new BlockLevitator();
 
     private IIcon iconTop;
 
