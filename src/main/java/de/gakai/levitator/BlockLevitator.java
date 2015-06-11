@@ -80,6 +80,7 @@ public class BlockLevitator extends BlockContainer
 	public void breakBlock(World world, int x, int y, int z, Block block, int metadata)
 	{
 		TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
+		entity.onBreak();
 		
 		if (entity != null)
 		{
@@ -101,7 +102,7 @@ public class BlockLevitator extends BlockContainer
 							amount = itemstack.stackSize;
 						itemstack.stackSize -= amount;
 						EntityItem entityitem = new EntityItem(world, x + randX, y + randY, z + randZ, new ItemStack(itemstack.getItem(), amount,
-								itemstack.getItemDamage()));
+						        itemstack.getItemDamage()));
 						
 						if (itemstack.hasTagCompound())
 							entityitem.getEntityItem().setTagCompound((NBTTagCompound) itemstack.getTagCompound().copy());

@@ -27,11 +27,6 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 	private int fuel = 0;
 	protected boolean isPowered = false;
 	
-	public TileEntityLevitator()
-	{
-		System.out.println("create???");
-	}
-	
 	@Override
 	public void updateEntity()
 	{
@@ -52,9 +47,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 						playerCount++;
 				}
 				else
-				{
 					setFlying(player, false);
-				}
 			}
 			fuel = Math.max(0, fuel - playerCount * POWER_PER_PLAYER_TICK);
 			if (inventory[0] != null && LevitatorMod.isItemFuel(inventory[0]))
@@ -166,9 +159,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 			NBTTagCompound slotTag = tagList.getCompoundTagAt(i);
 			byte slot = slotTag.getByte("slot");
 			if (slot >= 0 && slot < getSizeInventory())
-			{
 				inventory[slot] = ItemStack.loadItemStackFromNBT(slotTag);
-			}
 		}
 		
 		fuel = data.getInteger("fuel");
@@ -295,6 +286,26 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
 	public boolean isActive()
 	{
 		return fuel > 0 && !isPowered;
+	}
+	
+	public void onBreak()
+	{
+		Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, verticalLimit ? yCoord + 0.5 : 0, zCoord + 0.5);
+		for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
+		{
+			EntityPlayerMP player = (EntityPlayerMP) o;
+			if (!previousFlyState.contains(player))
+				continue;
+			
+			Vec3 playerPos = Vec3.createVectorHelper(player.posX, verticalLimit ? player.posY : 0, player.posZ);
+			double dist = playerPos.distanceTo(blockPos);
+			if (isActive() && dist < getRadius())
+			{
+				player.capabilities.isFlying = false;
+				player.capabilities.allowFlying = false;
+				player.sendPlayerAbilities();
+			}
+		}
 	}
 	
 }
