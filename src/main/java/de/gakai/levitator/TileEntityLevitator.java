@@ -26,10 +26,12 @@ import cofh.api.energy.IEnergyReceiver;
 
 public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
-
+    public static int RANGE_BASE = 8;
     public static int MAX_POWER = 50000;
     public static int POWER_PER_PLAYER = 10;
     public static int POWER_PER_TICK = 1;
+    public static double RANGE_PER_UPGRADE = 0.5;
+    public static double POWER_PER_UPGRADE = 0.0625; // fix per tick
     public static Shape shape = Shape.SPHERE;
     public static final int MAX_TICK_POWER_RECEIVE = 800;
 
@@ -68,6 +70,8 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                 else
                     removePlayer(player, true);
             }
+            if (isActive())
+                power -= POWER_PER_TICK + getUpgradeLevel() * POWER_PER_UPGRADE;
             if (power < 0)
                 power = 0;
 
@@ -88,16 +92,16 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         }
         else
         {
-            int playerCount = 0;
             Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5);
             for (Object o : Minecraft.getMinecraft().theWorld.playerEntities)
             {
                 EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
                 if (isActive() && shape.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
-                    playerCount++;
+                    power -= getPowerConsumption();
             }
-            power -= getPowerConsumption();
+            if (isActive())
+                power -= POWER_PER_TICK + getUpgradeLevel() * POWER_PER_UPGRADE;
             if (power < 0)
                 power = 0;
         }
@@ -143,10 +147,12 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                 if (affectedPlayers.contains(player))
                 {
                     // Player was set into fly mode by levitators
-                    player.capabilities.isFlying = false;
+                    if (!player.capabilities.isCreativeMode)
+                        player.capabilities.isFlying = false;
                     if (player.onGround || !safe)
                     {
-                        player.capabilities.allowFlying = false;
+                        if (!player.capabilities.isCreativeMode)
+                            player.capabilities.allowFlying = false;
                         affectedPlayers.remove(player);
                         playerAffectingBlocks.remove(player);
                     }
@@ -167,7 +173,12 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     public double getRadius()
     {
-        return 8 + 0.5 * (inventory[1] == null ? 0 : inventory[1].stackSize);
+        return RANGE_BASE + RANGE_PER_UPGRADE * getUpgradeLevel();
+    }
+
+    private int getUpgradeLevel()
+    {
+        return inventory[1] == null ? 0 : inventory[1].stackSize;
     }
 
     public int getPower()
@@ -344,7 +355,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     @Override
     public int[] getAccessibleSlotsFromSide(int side)
     {
-        return new int[] { side == 1 ? 1 : 0 };
+        return new int[] { side == ForgeDirection.UP.ordinal() ? 1 : 0 };
     }
 
     @Override
