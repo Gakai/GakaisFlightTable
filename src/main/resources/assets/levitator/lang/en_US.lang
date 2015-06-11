@@ -1,0 +1,6 @@
+tile.levitator.name=Levitator
+gui.levitator=Levitator
+gui.levitator.range1=Range:
+gui.levitator.range2=%d blocks
+gui.levitator.add=Adds next:
+gui.levitator.percent=%d%%

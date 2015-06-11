@@ -1,0 +1,16 @@
+[
+{
+  "modid": "GakaisLevitator",
+  "name": "Gakais Levitator",
+  "description": "A block, that consumes fuel to grant creative-like flying capabilities. Range can be upgraded.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Gakai"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
