@@ -63,11 +63,4 @@ public class GuiLevitator extends GuiContainer
 		this.drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
 	}
 	
-	public void renderPowerBar(int k, int l)
-	{
-		if (true)
-		{
-			
-		}
-	}
 }

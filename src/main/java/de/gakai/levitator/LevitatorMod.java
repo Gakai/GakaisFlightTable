@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -30,6 +31,19 @@ public class LevitatorMod
 
     public static final Block levitator = new BlockLevitator();
 
+    public static final Item redstoneFeather = new Item() //
+            .setFull3D() //
+            .setUnlocalizedName("redstoneFeather") //
+            .setCreativeTab(CreativeTabs.tabTransport) //
+            .setTextureName(ASSETS + ":redstoneFeather");
+
+    public static final Item creativeFeather = new Item() //
+            .setFull3D() //
+            .setUnlocalizedName("creativeFeather") //
+            .setCreativeTab(CreativeTabs.tabTransport) //
+            .setTextureName(ASSETS + ":creativeFeather") //
+            .setMaxStackSize(1);
+
     public static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
     public static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
@@ -40,9 +54,9 @@ public class LevitatorMod
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
         FMLCommonHandler.instance().bus().register(this);
 
-        fuels.put(Items.feather, 12000);
-
-        GameRegistry.registerBlock(levitator, levitator.getUnlocalizedName());
+        GameRegistry.registerItem(redstoneFeather, "redstoneFeather");
+        GameRegistry.registerItem(creativeFeather, "creativeFeather");
+        GameRegistry.registerBlock(levitator, "levitator");
         GameRegistry.registerTileEntity(TileEntityLevitator.class, LevitatorMod.MODID);
 
         GameRegistry.addShapedRecipe(new ItemStack(levitator), //
@@ -52,6 +66,17 @@ public class LevitatorMod
                 'd', Items.diamond, //
                 'o', Blocks.obsidian, //
                 'g', Blocks.redstone_lamp);
+
+        GameRegistry.addShapedRecipe(new ItemStack(redstoneFeather), //
+                " r ", //
+                "rfr", //
+                " r ", //
+                'f', Items.feather, //
+                'r', Items.redstone);
+
+        fuels.put(Items.feather, 12000);
+        fuels.put(redstoneFeather, 12000 * 4);
+        fuels.put(creativeFeather, 1200);
     }
 
     public static boolean isItemFuel(ItemStack item)

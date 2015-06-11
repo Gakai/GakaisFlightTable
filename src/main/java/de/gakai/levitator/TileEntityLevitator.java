@@ -74,7 +74,8 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory
                 if (fuelValue != null && fuel + fuelValue <= BlockLevitator.MAX_POWER)
                 {
                     fuel += fuelValue;
-                    --inventory[0].stackSize;
+                    if (inventory[0].getItem() != LevitatorMod.creativeFeather)
+                        --inventory[0].stackSize;
                     doUpdate = true;
                     if (inventory[0].stackSize == 0)
                         inventory[0] = inventory[0].getItem().getContainerItem(inventory[0]);
