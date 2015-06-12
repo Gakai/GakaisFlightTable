@@ -1,7 +1,9 @@
 package de.gakai.levitator;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -18,36 +20,103 @@ import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Vec3;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
-import cofh.api.energy.IEnergyReceiver;
 
-// import cpw.mods.fml.common.Optional;
+import org.apache.commons.lang3.StringUtils;
+
+import cofh.api.energy.IEnergyReceiver;
 
 public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
-    public static int RANGE_BASE = 8;
-    public static int MAX_POWER = 50000;
-    public static int POWER_PER_PLAYER = 10;
-    public static int POWER_PER_TICK = 1;
-    public static double RANGE_PER_UPGRADE = 0.5;
-    public static double POWER_PER_UPGRADE = 0.0625; // fix value per tick
-    public static Shape shape = Shape.SPHERE;
+
+    /** constants ********************************************************************************/
+
+    public static final int RANGE_BASE;
+    public static final int MAX_POWER;
+    public static final int POWER_PER_PLAYER;
+    public static final int POWER_PER_TICK;
+    public static final double RANGE_PER_UPGRADE;
+    public static final double POWER_PER_UPGRADE;
+    public static final Shape shape;
     public static final int MAX_TICK_POWER_RECEIVE = 800;
 
-    private static Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
-    private static Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
+    private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
 
-    /********************************************************************************/
+    private static final Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
+    private static final Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
 
-    public ItemStack[] inventory = new ItemStack[2];
+    /** static initializer ***********************************************************************/
+
+    static
+    {
+        Configuration config = new Configuration(new File("config/Levitator.cfg"), true);
+        MAX_POWER = config.get(LevitatorMod.CONF_CAT, "MaxPower", 50000).getInt();
+        POWER_PER_PLAYER = config.get(LevitatorMod.CONF_CAT, "PowerPerPlayer", 10).getInt();
+        POWER_PER_TICK = config.get(LevitatorMod.CONF_CAT, "PowerPerTick", 1).getInt();
+        POWER_PER_UPGRADE = config.get(LevitatorMod.CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
+        RANGE_BASE = config.get(LevitatorMod.CONF_CAT, "BaseRange", 8).getInt();
+        RANGE_PER_UPGRADE = config.get(LevitatorMod.CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
+        shape = Shape.valueOf(config.get(LevitatorMod.CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
+        config.save();
+    }
+
+    /** fields ***********************************************************************************/
+
+    private ItemStack[] inventory = new ItemStack[2];
 
     private int power = 0;
     private int powerReceivablePerTick = 0;
 
-    protected boolean isPowered = false;
+    private boolean powered = false;
 
-    /********************************************************************************/
+    /** getter / setter **************************************************************************/
+
+    public int getPower()
+    {
+        return power;
+    }
+
+    /**
+     * @param amount
+     *            amount to be added
+     * @param negate
+     *            negates amount to subtract it
+     * @return true iff amount could be completely added or subtractet without hitting the
+     *         borders&nbsp;(0,&nbsp;MAX_POWER).
+     */
+    public boolean incPower(int amount, boolean negate)
+    {
+        if (!negate)
+            power += amount;
+        else
+            power -= amount;
+
+        if (power > MAX_POWER)
+        {
+            power = MAX_POWER;
+            return false;
+        }
+        if (power < 0)
+        {
+            power = 0;
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isPowered()
+    {
+        return powered;
+    }
+
+    public void setPowered(boolean powered)
+    {
+        this.powered = powered;
+    }
+
+    /** TileEntity *******************************************************************************/
 
     @Override
     public void updateEntity()
@@ -64,28 +133,33 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                 if (isActive() && shape.contains(blockPos, getRadius(), playerPos))
                 {
                     if (player.capabilities.isFlying)
-                        power -= getPowerConsumption();
+                        incPower(getPowerConsumptionPerPlayer(), true);
                     addPlayer(player);
                 }
                 else
                     removePlayer(player, true);
             }
             if (isActive())
-                power -= POWER_PER_TICK + getUpgradeLevel() * POWER_PER_UPGRADE;
-            if (power < 0)
-                power = 0;
+                incPower(getPowerConsumptionPerTick(), true);
 
             // Process refill
             boolean doUpdate = false;
-            Integer fuelValue = LevitatorMod.getFuelValue(inventory[0]);
-            if (fuelValue != null && power + fuelValue <= MAX_POWER)
+            if (inventory[0] != null)
             {
-                power += fuelValue;
                 if (inventory[0].getItem() != LevitatorMod.creativeFeather)
-                    --inventory[0].stackSize;
-                if (inventory[0].stackSize == 0)
-                    inventory[0] = inventory[0].getItem().getContainerItem(inventory[0]);
-                doUpdate = true;
+                {
+                    Integer fuelValue = LevitatorMod.getFuelValue(inventory[0]);
+                    if (fuelValue != null && power + fuelValue <= MAX_POWER)
+                    {
+                        incPower(fuelValue, false);
+                        --inventory[0].stackSize;
+                        if (inventory[0].stackSize == 0)
+                            inventory[0] = inventory[0].getItem().getContainerItem(inventory[0]);
+                        doUpdate = true;
+                    }
+                }
+                else
+                    power = MAX_POWER;
             }
             if (doUpdate || worldObj.getWorldInfo().getWorldTotalTime() % 40 == 0)
                 worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
@@ -98,10 +172,10 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
                 EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
                 if (isActive() && shape.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
-                    power -= getPowerConsumption();
+                    incPower(getPowerConsumptionPerPlayer(), true);
             }
             if (isActive())
-                power -= POWER_PER_TICK + getUpgradeLevel() * POWER_PER_UPGRADE;
+                incPower(getPowerConsumptionPerTick(), true);
             if (power < 0)
                 power = 0;
         }
@@ -109,8 +183,14 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     public void onBreak()
     {
-        for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
-            removePlayer((EntityPlayer) o, false);
+        List<EntityPlayer> players;
+        if (worldObj.isRemote)
+            players = Minecraft.getMinecraft().theWorld.playerEntities;
+        else
+            players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+
+        for (EntityPlayer player : players)
+            removePlayer(player, false);
     }
 
     private void addPlayer(EntityPlayer player)
@@ -164,11 +244,9 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         }
     }
 
-    /********************************************************************************/
-
     public boolean isActive()
     {
-        return power > 0 && !isPowered;
+        return power > 0 && !powered;
     }
 
     public double getRadius()
@@ -176,22 +254,22 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         return RANGE_BASE + RANGE_PER_UPGRADE * getUpgradeLevel();
     }
 
-    private int getUpgradeLevel()
+    public int getUpgradeLevel()
     {
         return inventory[1] == null ? 0 : inventory[1].stackSize;
     }
 
-    public int getPower()
-    {
-        return power;
-    }
-
-    public int getPowerConsumption()
+    public int getPowerConsumptionPerPlayer()
     {
         return POWER_PER_PLAYER;
     }
 
-    /********************************************************************************/
+    public int getPowerConsumptionPerTick()
+    {
+        return (int) (POWER_PER_TICK + POWER_PER_UPGRADE * getUpgradeLevel());
+    }
+
+    /** TileEntity - persistence/network *********************************************************/
 
     @Override
     public void writeToNBT(NBTTagCompound data)
@@ -212,21 +290,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         }
         data.setTag("inv", invList);
         data.setInteger("fuel", power);
-        data.setBoolean("powered", isPowered);
-    }
-
-    @Override
-    public Packet getDescriptionPacket()
-    {
-        NBTTagCompound tagCompound = new NBTTagCompound();
-        writeToNBT(tagCompound);
-        return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tagCompound);
-    }
-
-    @Override
-    public void onDataPacket(NetworkManager networkManager, S35PacketUpdateTileEntity packet)
-    {
-        readFromNBT(packet.func_148857_g());
+        data.setBoolean("powered", powered);
     }
 
     @Override
@@ -244,10 +308,24 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         }
 
         power = data.getInteger("fuel");
-        isPowered = data.getBoolean("powered");
+        powered = data.getBoolean("powered");
     }
 
-    /*********************************************************************************************/
+    @Override
+    public Packet getDescriptionPacket()
+    {
+        NBTTagCompound tagCompound = new NBTTagCompound();
+        writeToNBT(tagCompound);
+        return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tagCompound);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager networkManager, S35PacketUpdateTileEntity packet)
+    {
+        readFromNBT(packet.func_148857_g());
+    }
+
+    /** IInventory *******************************************************************************/
 
     @Override
     public int getSizeInventory()
@@ -359,7 +437,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
         return true;
     }
 
-    /*********************************************************************************************/
+    /** IEnergyConnection (RF) *******************************************************************/
 
     @Override
     public boolean canConnectEnergy(ForgeDirection from)

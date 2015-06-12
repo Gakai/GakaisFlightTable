@@ -22,15 +22,20 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class BlockLevitator extends BlockContainer
 {
 
+    /** new Material *****************************************************************************/
+
     public static final Material material = new Material(MapColor.obsidianColor) {
         {
             setImmovableMobility();
         }
     };
 
-    private IIcon iconTop;
+    /** textures *********************************************************************************/
 
+    private IIcon iconTop;
     private IIcon iconBottom;
+
+    /** constructor ******************************************************************************/
 
     public BlockLevitator()
     {
@@ -46,50 +51,12 @@ public class BlockLevitator extends BlockContainer
         setLightLevel(0.5f);
     }
 
-    @Override
-    public boolean isOpaqueCube()
-    {
-        return false;
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void registerBlockIcons(IIconRegister iconRegister)
-    {
-        blockIcon = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_side");
-        iconTop = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_top");
-        iconBottom = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_bottom");
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public IIcon getIcon(int side, int metadata)
-    {
-        return side == ForgeDirection.DOWN.ordinal() ? iconBottom : side != ForgeDirection.UP.ordinal() ? blockIcon : iconTop;
-    }
+    /** BlockContainer ***************************************************************************/
 
     @Override
     public TileEntity createNewTileEntity(World p_149915_1_, int metadata)
     {
         return new TileEntityLevitator();
-    }
-
-    @Override
-    public void onNeighborBlockChange(World world, int x, int y, int z, Block block)
-    {
-        TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
-        entity.isPowered = world.isBlockIndirectlyGettingPowered(x, y, z);
-    }
-
-    @Override
-    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int metadata, float par1, float par2, float Par3)
-    {
-        TileEntity entity = world.getTileEntity(x, y, z);
-        if (entity == null || player.isSneaking())
-            return false;
-
-        player.openGui(LevitatorMod.instance, 0, world, x, y, z);
-        return true;
     }
 
     @Override
@@ -133,6 +100,48 @@ public class BlockLevitator extends BlockContainer
             world.func_147453_f(x, y, z, block);
         }
         super.breakBlock(world, x, y, z, block, metadata);
+    }
+
+    /** Block ************************************************************************************/
+
+    @Override
+    public boolean isOpaqueCube()
+    {
+        return false;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void registerBlockIcons(IIconRegister iconRegister)
+    {
+        blockIcon = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_side");
+        iconTop = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_top");
+        iconBottom = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_bottom");
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getIcon(int side, int metadata)
+    {
+        return side == ForgeDirection.DOWN.ordinal() ? iconBottom : side != ForgeDirection.UP.ordinal() ? blockIcon : iconTop;
+    }
+
+    @Override
+    public void onNeighborBlockChange(World world, int x, int y, int z, Block block)
+    {
+        TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
+        entity.setPowered(world.isBlockIndirectlyGettingPowered(x, y, z));
+    }
+
+    @Override
+    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int metadata, float par1, float par2, float Par3)
+    {
+        TileEntity entity = world.getTileEntity(x, y, z);
+        if (entity == null || player.isSneaking())
+            return false;
+
+        player.openGui(LevitatorMod.instance, 0, world, x, y, z);
+        return true;
     }
 
     @Override

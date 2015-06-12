@@ -10,7 +10,9 @@ import de.gakai.levitator.TileEntityLevitator;
 
 public class ContainerLevitator extends Container
 {
-    protected TileEntityLevitator levitatorEntity;
+    private TileEntityLevitator levitatorEntity;
+
+    /** constructor ******************************************************************************/
 
     public ContainerLevitator(InventoryPlayer playerInventory, TileEntityLevitator entity)
     {
@@ -32,6 +34,8 @@ public class ContainerLevitator extends Container
         for (int i = 0; i < 9; ++i)
             addSlotToContainer(new Slot(playerInventory, i, 8 + i * 18, 142));
     }
+
+    /** Container ********************************************************************************/
 
     @Override
     public boolean canInteractWith(EntityPlayer player)
