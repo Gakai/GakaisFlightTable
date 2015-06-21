@@ -1,4 +1,4 @@
-package de.gakai.levitator;
+package de.gakai.flighttable;
 
 import net.minecraft.util.Vec3;
 

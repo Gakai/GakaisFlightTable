@@ -1,4 +1,4 @@
-package de.gakai.levitator;
+package de.gakai.flighttable;
 
 import java.io.File;
 import java.util.Collections;
@@ -28,13 +28,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import cofh.api.energy.IEnergyReceiver;
 
-public class TileEntityLevitator extends TileEntity implements ISidedInventory, IEnergyReceiver
+public class TileEntityFlightTable extends TileEntity implements ISidedInventory, IEnergyReceiver
 {
 
     /** constants ********************************************************************************/
 
+    public static final int MAX_POWER = 50000;
     public static final int RANGE_BASE;
-    public static final int MAX_POWER;
     public static final int POWER_PER_PLAYER;
     public static final int POWER_PER_TICK;
     public static final double RANGE_PER_UPGRADE;
@@ -45,20 +45,19 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
 
     private static final Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
-    private static final Map<EntityPlayer, Set<TileEntityLevitator>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityLevitator>>();
+    private static final Map<EntityPlayer, Set<TileEntityFlightTable>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityFlightTable>>();
 
     /** static initializer ***********************************************************************/
 
     static
     {
         Configuration config = new Configuration(new File("config/Levitator.cfg"), true);
-        MAX_POWER = config.get(LevitatorMod.CONF_CAT, "MaxPower", 50000).getInt();
-        POWER_PER_PLAYER = config.get(LevitatorMod.CONF_CAT, "PowerPerPlayer", 10).getInt();
-        POWER_PER_TICK = config.get(LevitatorMod.CONF_CAT, "PowerPerTick", 1).getInt();
-        POWER_PER_UPGRADE = config.get(LevitatorMod.CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
-        RANGE_BASE = config.get(LevitatorMod.CONF_CAT, "BaseRange", 8).getInt();
-        RANGE_PER_UPGRADE = config.get(LevitatorMod.CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
-        shape = Shape.valueOf(config.get(LevitatorMod.CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
+        POWER_PER_PLAYER = config.get(FlightTableMod.CONF_CAT, "PowerPerPlayer", 10).getInt();
+        POWER_PER_TICK = config.get(FlightTableMod.CONF_CAT, "PowerPerTick", 1).getInt();
+        POWER_PER_UPGRADE = config.get(FlightTableMod.CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
+        RANGE_BASE = config.get(FlightTableMod.CONF_CAT, "BaseRange", 8).getInt();
+        RANGE_PER_UPGRADE = config.get(FlightTableMod.CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
+        shape = Shape.valueOf(config.get(FlightTableMod.CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
         config.save();
     }
 
@@ -146,9 +145,9 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
             boolean doUpdate = false;
             if (inventory[0] != null)
             {
-                if (inventory[0].getItem() != LevitatorMod.creativeFeather)
+                if (inventory[0].getItem() != FlightTableMod.creativeFeather)
                 {
-                    Integer fuelValue = LevitatorMod.getFuelValue(inventory[0]);
+                    Integer fuelValue = FlightTableMod.getFuelValue(inventory[0]);
                     if (fuelValue != null && power + fuelValue <= MAX_POWER)
                     {
                         incPower(fuelValue, false);
@@ -195,10 +194,10 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     private void addPlayer(EntityPlayer player)
     {
-        Set<TileEntityLevitator> affectedBlocks = playerAffectingBlocks.get(player);
+        Set<TileEntityFlightTable> affectedBlocks = playerAffectingBlocks.get(player);
         if (affectedBlocks == null)
         {
-            affectedBlocks = new HashSet<TileEntityLevitator>();
+            affectedBlocks = new HashSet<TileEntityFlightTable>();
             playerAffectingBlocks.put(player, affectedBlocks);
         }
         // Only affect players that were not in fly-mode to begin with
@@ -215,11 +214,11 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
 
     private void removePlayer(EntityPlayer player, boolean safe)
     {
-        Set<TileEntityLevitator> affectingBlocks = playerAffectingBlocks.get(player);
-        // Check if the player is or was affected by a levitator
+        Set<TileEntityFlightTable> affectingBlocks = playerAffectingBlocks.get(player);
+        // Check if the player is or was affected by a flightTable
         if (affectingBlocks != null)
         {
-            // Remove this levitator from the set
+            // Remove this flightTable from the set
             affectingBlocks.remove(this);
 
             // If no more levitators affect the player, start disabling flying
@@ -348,7 +347,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     @Override
     public boolean isItemValidForSlot(int slot, ItemStack item)
     {
-        return slot == 0 ? LevitatorMod.isItemFuel(item) : LevitatorMod.isItemUpgrade(item);
+        return slot == 0 ? FlightTableMod.isItemFuel(item) : FlightTableMod.isItemUpgrade(item);
     }
 
     @Override
@@ -442,7 +441,7 @@ public class TileEntityLevitator extends TileEntity implements ISidedInventory, 
     @Override
     public boolean canConnectEnergy(ForgeDirection from)
     {
-        return true;
+        return from != ForgeDirection.UP;
     }
 
     @Override

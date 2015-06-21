@@ -1,20 +1,20 @@
-package de.gakai.levitator.gui;
+package de.gakai.flighttable.gui;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import de.gakai.levitator.LevitatorMod;
-import de.gakai.levitator.TileEntityLevitator;
+import de.gakai.flighttable.FlightTableMod;
+import de.gakai.flighttable.TileEntityFlightTable;
 
-public class ContainerLevitator extends Container
+public class ContainerFlightTable extends Container
 {
-    private TileEntityLevitator levitatorEntity;
+    private TileEntityFlightTable levitatorEntity;
 
     /** constructor ******************************************************************************/
 
-    public ContainerLevitator(InventoryPlayer playerInventory, TileEntityLevitator entity)
+    public ContainerFlightTable(InventoryPlayer playerInventory, TileEntityFlightTable entity)
     {
         levitatorEntity = entity;
         // fuel
@@ -85,9 +85,9 @@ public class ContainerLevitator extends Container
     {
         if (!toPlayer)
         {
-            if (LevitatorMod.isItemFuel(stack))
+            if (FlightTableMod.isItemFuel(stack))
                 return mergeItemStack(stack, 0);
-            else if (LevitatorMod.isItemUpgrade(stack))
+            else if (FlightTableMod.isItemUpgrade(stack))
                 return mergeItemStack(stack, 1);
             else
                 return false;

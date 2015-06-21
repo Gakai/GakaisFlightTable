@@ -1,8 +1,0 @@
-tile.levitator.name=Levitator
-item.redstoneFeather.name=Redstone Feather
-item.creativeFeather.name=Creative Feather
-gui.levitator=Levitator
-gui.levitator.range1=Range:
-gui.levitator.range2=%d blocks
-gui.levitator.add=Adds next:
-gui.levitator.percent=%d%%

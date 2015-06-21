@@ -1,4 +1,4 @@
-package de.gakai.levitator;
+package de.gakai.flighttable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,24 +16,24 @@ import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
-import de.gakai.levitator.gui.GuiHandler;
+import de.gakai.flighttable.gui.GuiHandler;
 
-@Mod(modid = LevitatorMod.MODID, version = LevitatorMod.VERSION)
-public class LevitatorMod
+@Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)
+public class FlightTableMod
 {
     // XXX: Shift-right clicking with a feather adds it into the container, if it fits
 
     /** constants ********************************************************************************/
 
-    public static final String MODID = "GakaisLevitator";
-    public static final String VERSION = "0.1";
-    public static final String ASSETS = "levitator";
-    public static final String CONF_CAT = "Levitator";
+    public static final String MODID = "GakaisFlightTable";
+    public static final String VERSION = "1.0";
+    public static final String ASSETS = "flighttable";
+    public static final String CONF_CAT = "FlightTable";
 
     @Instance(MODID)
-    public static LevitatorMod instance;
+    public static FlightTableMod instance;
 
-    public static final Block levitator = new BlockLevitator();
+    public static final Block flightTable = new BlockFlightTable();
 
     public static final Item redstoneFeather = new Item() //
             .setFull3D() //
@@ -67,10 +67,10 @@ public class LevitatorMod
 
         GameRegistry.registerItem(redstoneFeather, "redstoneFeather");
         GameRegistry.registerItem(creativeFeather, "creativeFeather");
-        GameRegistry.registerTileEntity(TileEntityLevitator.class, LevitatorMod.MODID);
-        GameRegistry.registerBlock(levitator, "levitator");
+        GameRegistry.registerTileEntity(TileEntityFlightTable.class, FlightTableMod.MODID);
+        GameRegistry.registerBlock(flightTable, "flightTable");
 
-        GameRegistry.addShapedRecipe(new ItemStack(levitator), //
+        GameRegistry.addShapedRecipe(new ItemStack(flightTable), //
                 "dod", //
                 "ogo", //
                 "dod", //
@@ -86,7 +86,7 @@ public class LevitatorMod
                 'r', Items.redstone);
 
         fuels.put(Items.feather, 12000);
-        fuels.put(redstoneFeather, 12000 * 4);
+        fuels.put(redstoneFeather, 48000);
         fuels.put(creativeFeather, 1200);
     }
 
@@ -94,7 +94,7 @@ public class LevitatorMod
 
     public static boolean isItemFuel(ItemStack item)
     {
-        return LevitatorMod.fuels.containsKey(item.getItem());
+        return FlightTableMod.fuels.containsKey(item.getItem());
     }
 
     public static Integer getFuelValue(ItemStack fuelStack)
@@ -104,7 +104,7 @@ public class LevitatorMod
 
     public static boolean isItemUpgrade(ItemStack item)
     {
-        return item.getItem() == LevitatorMod.upgradeItem;
+        return item.getItem() == FlightTableMod.upgradeItem;
     }
 
 }

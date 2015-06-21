@@ -1,4 +1,4 @@
-package de.gakai.levitator;
+package de.gakai.flighttable;
 
 import java.util.Random;
 
@@ -19,7 +19,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-public class BlockLevitator extends BlockContainer
+public class BlockFlightTable extends BlockContainer
 {
 
     /** new Material *****************************************************************************/
@@ -37,16 +37,16 @@ public class BlockLevitator extends BlockContainer
 
     /** constructor ******************************************************************************/
 
-    public BlockLevitator()
+    public BlockFlightTable()
     {
         super(material);
         setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.75F, 1.0F);
         setHardness(5f);
         setResistance(2000f);
         setStepSound(Block.soundTypePiston);
-        setBlockName("levitator");
+        setBlockName("flighttable");
         setCreativeTab(CreativeTabs.tabTransport);
-        setBlockTextureName(LevitatorMod.ASSETS + ":levitator_side");
+        setBlockTextureName(FlightTableMod.ASSETS + ":flight_table_side");
         setLightOpacity(0);
         setLightLevel(0.5f);
     }
@@ -54,15 +54,15 @@ public class BlockLevitator extends BlockContainer
     /** BlockContainer ***************************************************************************/
 
     @Override
-    public TileEntity createNewTileEntity(World p_149915_1_, int metadata)
+    public TileEntity createNewTileEntity(World world, int metadata)
     {
-        return new TileEntityLevitator();
+        return new TileEntityFlightTable();
     }
 
     @Override
     public void breakBlock(World world, int x, int y, int z, Block block, int metadata)
     {
-        TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
         entity.onBreak();
 
         if (entity != null)
@@ -114,9 +114,9 @@ public class BlockLevitator extends BlockContainer
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister iconRegister)
     {
-        blockIcon = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_side");
-        iconTop = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_top");
-        iconBottom = iconRegister.registerIcon(LevitatorMod.ASSETS + ":levitator_bottom");
+        blockIcon = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_side");
+        iconTop = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_top");
+        iconBottom = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_bottom");
     }
 
     @Override
@@ -129,7 +129,7 @@ public class BlockLevitator extends BlockContainer
     @Override
     public void onNeighborBlockChange(World world, int x, int y, int z, Block block)
     {
-        TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
         entity.setPowered(world.isBlockIndirectlyGettingPowered(x, y, z));
     }
 
@@ -140,7 +140,7 @@ public class BlockLevitator extends BlockContainer
         if (entity == null || player.isSneaking())
             return false;
 
-        player.openGui(LevitatorMod.instance, 0, world, x, y, z);
+        player.openGui(FlightTableMod.instance, 0, world, x, y, z);
         return true;
     }
 
@@ -148,7 +148,7 @@ public class BlockLevitator extends BlockContainer
     @SideOnly(Side.CLIENT)
     public void randomDisplayTick(World world, int x, int y, int z, Random rand)
     {
-        TileEntityLevitator entity = (TileEntityLevitator) world.getTileEntity(x, y, z);
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
         if (entity == null || !entity.isActive())
             return;
 

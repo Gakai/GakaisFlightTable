@@ -1,10 +1,10 @@
-package de.gakai.levitator.gui;
+package de.gakai.flighttable.gui;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import cpw.mods.fml.common.network.IGuiHandler;
-import de.gakai.levitator.TileEntityLevitator;
+import de.gakai.flighttable.TileEntityFlightTable;
 
 public class GuiHandler implements IGuiHandler
 {
@@ -15,8 +15,8 @@ public class GuiHandler implements IGuiHandler
     public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z)
     {
         TileEntity entity = world.getTileEntity(x, y, z);
-        if (entity instanceof TileEntityLevitator)
-            return new ContainerLevitator(player.inventory, (TileEntityLevitator) entity);
+        if (entity instanceof TileEntityFlightTable)
+            return new ContainerFlightTable(player.inventory, (TileEntityFlightTable) entity);
         return null;
     }
 
@@ -24,8 +24,8 @@ public class GuiHandler implements IGuiHandler
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z)
     {
         TileEntity entity = world.getTileEntity(x, y, z);
-        if (entity instanceof TileEntityLevitator)
-            return new GuiLevitator(player.inventory, (TileEntityLevitator) entity);
+        if (entity instanceof TileEntityFlightTable)
+            return new GuiFlightTable(player.inventory, (TileEntityFlightTable) entity);
         return null;
     }
 

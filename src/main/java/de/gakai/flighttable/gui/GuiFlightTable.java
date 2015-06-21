@@ -1,4 +1,4 @@
-package de.gakai.levitator.gui;
+package de.gakai.flighttable.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -7,10 +7,10 @@ import net.minecraft.util.StatCollector;
 
 import org.lwjgl.opengl.GL11;
 
-import de.gakai.levitator.LevitatorMod;
-import de.gakai.levitator.TileEntityLevitator;
+import de.gakai.flighttable.FlightTableMod;
+import de.gakai.flighttable.TileEntityFlightTable;
 
-public class GuiLevitator extends GuiContainer
+public class GuiFlightTable extends GuiContainer
 {
 
     /** constants ********************************************************************************/
@@ -25,16 +25,16 @@ public class GuiLevitator extends GuiContainer
 
     /** fields ***********************************************************************************/
 
-    private final TileEntityLevitator entity;
+    private final TileEntityFlightTable entity;
     private final ResourceLocation texture;
 
     /** constructor ******************************************************************************/
 
-    public GuiLevitator(InventoryPlayer playerInventory, TileEntityLevitator levitatorEntity)
+    public GuiFlightTable(InventoryPlayer playerInventory, TileEntityFlightTable levitatorEntity)
     {
-        super(new ContainerLevitator(playerInventory, levitatorEntity));
+        super(new ContainerFlightTable(playerInventory, levitatorEntity));
         entity = levitatorEntity;
-        texture = new ResourceLocation(LevitatorMod.ASSETS, "textures/gui/levitator.png");
+        texture = new ResourceLocation(FlightTableMod.ASSETS, "textures/gui/flight_table.png");
     }
 
     /** GuiContainer *****************************************************************************/
@@ -45,15 +45,15 @@ public class GuiLevitator extends GuiContainer
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.renderEngine.bindTexture(texture);
 
-        int percent = (int) Math.min(100, Math.round(100 * entity.getPower() / (double) TileEntityLevitator.MAX_POWER));
+        int percent = (int) Math.min(100, Math.round(100 * entity.getPower() / (double) TileEntityFlightTable.MAX_POWER));
 
         int powerScaled = percent * POWER_HEIGHT / 100;
         drawTexturedModalRect(POWER_X, BOTTOM_POWER_Y - powerScaled, POWER_U, POWER_V, POWER_WIDTH, powerScaled);
 
-        String header = StatCollector.translateToLocal("gui.levitator");
+        String header = StatCollector.translateToLocal("gui.flighttable");
         fontRendererObj.drawString(header, (xSize - fontRendererObj.getStringWidth(header)) / 2 + 10, 6, 4210752);
 
-        String energy = String.format(StatCollector.translateToLocal("gui.levitator.percent"), percent);
+        String energy = String.format(StatCollector.translateToLocal("gui.flighttable.percent"), percent);
         fontRendererObj.drawString(energy, 30, 15, 4210752);
 
         String range = String.format("%.1f", entity.getRadius());

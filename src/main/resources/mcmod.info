@@ -1,16 +1,16 @@
 [
 {
-  "modid": "GakaisLevitator",
-  "name": "Gakais Levitator",
-  "description": "A block, that consumes fuel to grant creative-like flying capabilities. Range can be upgraded.",
+  "modid": "GakaisFlightTable",
+  "name": "Gakais Flight Table",
+  "description": "A table, that consumes fuel to grant creative-like flying capabilities. Range can be upgraded.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["Gakai"],
-  "credits": "",
+  "authorList": ["Gakai","olee"],
+  "credits": "CoFH for RedfluxAPI",
   "logoFile": "",
   "screenshots": [],
-  "dependencies": ["ThermalExpansion"]
+  "dependencies": ["ThermalExpansion", "EnderIO"]
 }
 ]
