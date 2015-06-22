@@ -19,7 +19,7 @@ apply plugin: 'forge'
 
 version = "1.0"
 group= "de.gakai.flighttable"
-archivesBaseName = "GakaisFlightTable"
+archivesBaseName = "GakaisFlightTable-1.7.10"
 
 minecraft {
     version = "1.7.10-10.13.3.1420-1.7.10"
