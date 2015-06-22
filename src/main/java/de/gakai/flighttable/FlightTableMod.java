@@ -9,13 +9,14 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import de.gakai.flighttable.gui.GuiHandler;
 
 @Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)
@@ -27,7 +28,6 @@ public class FlightTableMod
 
     public static final String MODID = "GakaisFlightTable";
     public static final String VERSION = "1.0";
-    public static final String ASSETS = "flighttable";
     public static final String CONF_CAT = "FlightTable";
 
     @Instance(MODID)
@@ -37,25 +37,26 @@ public class FlightTableMod
 
     public static final Item redstoneFeather = new Item() //
             .setFull3D() //
-            .setUnlocalizedName("redstoneFeather") //
-            .setCreativeTab(CreativeTabs.tabTransport) //
-            .setTextureName(ASSETS + ":redstoneFeather");
+            .setUnlocalizedName("redstone_feather") //
+            .setCreativeTab(CreativeTabs.tabTransport);
 
     public static final Item creativeFeather = new Item() {
         @Override
-        public boolean hasEffect(ItemStack par1ItemStack, int pass)
+        public boolean hasEffect(ItemStack par1ItemStack)
         {
             return true;
         };
     }.setFull3D() //
-            .setUnlocalizedName("creativeFeather") //
+            .setUnlocalizedName("creative_feather") //
             .setCreativeTab(CreativeTabs.tabTransport) //
-            .setTextureName(ASSETS + ":creativeFeather") //
             .setMaxStackSize(1);
 
     private static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
     private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
+
+    @SidedProxy(serverSide = "de.gakai.flighttable.CommonProxy", clientSide = "de.gakai.flighttable.ClientProxy")
+    private static CommonProxy proxy;
 
     /** init *************************************************************************************/
 
@@ -65,10 +66,12 @@ public class FlightTableMod
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
         FMLCommonHandler.instance().bus().register(this);
 
-        GameRegistry.registerItem(redstoneFeather, "redstoneFeather");
-        GameRegistry.registerItem(creativeFeather, "creativeFeather");
         GameRegistry.registerTileEntity(TileEntityFlightTable.class, FlightTableMod.MODID);
-        GameRegistry.registerBlock(flightTable, "flightTable");
+        GameRegistry.registerItem(redstoneFeather, "redstone_feather");
+        GameRegistry.registerItem(creativeFeather, "creative_feather");
+        GameRegistry.registerBlock(flightTable, "flight_table");
+
+        proxy.init();
 
         GameRegistry.addShapedRecipe(new ItemStack(flightTable), //
                 "dod", //

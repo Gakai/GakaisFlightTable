@@ -6,18 +6,18 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.EnumWorldBlockLayer;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockFlightTable extends BlockContainer
 {
@@ -30,11 +30,6 @@ public class BlockFlightTable extends BlockContainer
         }
     };
 
-    /** textures *********************************************************************************/
-
-    private IIcon iconTop;
-    private IIcon iconBottom;
-
     /** constructor ******************************************************************************/
 
     public BlockFlightTable()
@@ -44,11 +39,23 @@ public class BlockFlightTable extends BlockContainer
         setHardness(5f);
         setResistance(2000f);
         setStepSound(Block.soundTypePiston);
-        setBlockName("flighttable");
+        setUnlocalizedName("flight_table");
         setCreativeTab(CreativeTabs.tabTransport);
-        setBlockTextureName(FlightTableMod.ASSETS + ":flight_table_side");
         setLightOpacity(0);
         setLightLevel(0.5f);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public EnumWorldBlockLayer getBlockLayer()
+    {
+        return EnumWorldBlockLayer.SOLID;
+    }
+
+    @Override
+    public int getRenderType()
+    {
+        return 3;
     }
 
     /** BlockContainer ***************************************************************************/
@@ -60,46 +67,17 @@ public class BlockFlightTable extends BlockContainer
     }
 
     @Override
-    public void breakBlock(World world, int x, int y, int z, Block block, int metadata)
+    public void breakBlock(World world, BlockPos pos, IBlockState state)
     {
-        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(pos);
         entity.onBreak();
 
         if (entity != null)
         {
-            Random rand = new Random();
-            for (int slotIndex = 0; slotIndex < entity.getSizeInventory(); ++slotIndex)
-            {
-                ItemStack itemstack = entity.getStackInSlot(slotIndex);
-                if (itemstack != null)
-                {
-                    float randX = rand.nextFloat() * 0.8F + 0.1F;
-                    float randY = rand.nextFloat() * 0.8F + 0.1F;
-                    float randZ = rand.nextFloat() * 0.8F + 0.1F;
-
-                    while (itemstack.stackSize > 0)
-                    {
-                        int amount = rand.nextInt(21) + 10;
-                        if (amount > itemstack.stackSize)
-                            amount = itemstack.stackSize;
-                        itemstack.stackSize -= amount;
-                        EntityItem entityitem = new EntityItem(world, x + randX, y + randY, z + randZ, new ItemStack(itemstack.getItem(), amount,
-                                itemstack.getItemDamage()));
-
-                        if (itemstack.hasTagCompound())
-                            entityitem.getEntityItem().setTagCompound((NBTTagCompound) itemstack.getTagCompound().copy());
-
-                        float velocity = 0.05F;
-                        entityitem.motionX = (float) rand.nextGaussian() * velocity;
-                        entityitem.motionY = (float) rand.nextGaussian() * velocity + 0.2F;
-                        entityitem.motionZ = (float) rand.nextGaussian() * velocity;
-                        world.spawnEntityInWorld(entityitem);
-                    }
-                }
-            }
-            world.func_147453_f(x, y, z, block);
+            InventoryHelper.dropInventoryItems(world, pos, entity);
+            world.updateComparatorOutputLevel(pos, this);
         }
-        super.breakBlock(world, x, y, z, block, metadata);
+        super.breakBlock(world, pos, state);
     }
 
     /** Block ************************************************************************************/
@@ -111,51 +89,35 @@ public class BlockFlightTable extends BlockContainer
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void registerBlockIcons(IIconRegister iconRegister)
+    public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block block)
     {
-        blockIcon = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_side");
-        iconTop = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_top");
-        iconBottom = iconRegister.registerIcon(FlightTableMod.ASSETS + ":flight_table_bottom");
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(pos);
+        entity.setPowered(world.isBlockPowered(pos));
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public IIcon getIcon(int side, int metadata)
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumFacing side, float hitX, float hitY, float hitZ)
     {
-        return side == ForgeDirection.DOWN.ordinal() ? iconBottom : side != ForgeDirection.UP.ordinal() ? blockIcon : iconTop;
-    }
-
-    @Override
-    public void onNeighborBlockChange(World world, int x, int y, int z, Block block)
-    {
-        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
-        entity.setPowered(world.isBlockIndirectlyGettingPowered(x, y, z));
-    }
-
-    @Override
-    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int metadata, float par1, float par2, float Par3)
-    {
-        TileEntity entity = world.getTileEntity(x, y, z);
+        TileEntity entity = world.getTileEntity(pos);
         if (entity == null || player.isSneaking())
             return false;
 
-        player.openGui(FlightTableMod.instance, 0, world, x, y, z);
+        player.openGui(FlightTableMod.instance, 0, world, pos.getX(), pos.getY(), pos.getZ());
         return true;
     }
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(World world, int x, int y, int z, Random rand)
+    public void randomDisplayTick(World world, BlockPos pos, IBlockState state, Random rand)
     {
-        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(x, y, z);
+        TileEntityFlightTable entity = (TileEntityFlightTable) world.getTileEntity(pos);
         if (entity == null || !entity.isActive())
             return;
 
-        double px = x + 0.5D + (rand.nextFloat() - 0.5D) * 0.2D;
-        double py = y + 1F;
-        double pz = z + 0.5D + (rand.nextFloat() - 0.5D) * 0.2D;
-        world.spawnParticle("reddust", px, py, pz, 75f / 255, 237f / 255, 209f / 255);
+        double px = pos.getX() + 0.5D + (rand.nextFloat() - 0.5D) * 0.2D;
+        double py = pos.getY() + 1F;
+        double pz = pos.getZ() + 0.5D + (rand.nextFloat() - 0.5D) * 0.2D;
+        world.spawnParticle(EnumParticleTypes.REDSTONE, px, py, pz, 75f / 255, 237f / 255, 209f / 255);
     }
 
 }

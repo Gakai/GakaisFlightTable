@@ -1,0 +1,9 @@
+{
+    "parent": "block/enchanting_table_base",
+    "textures": {
+        "particle": "gakaisflighttable:blocks/flight_table_bottom",
+        "bottom": "gakaisflighttable:blocks/flight_table_bottom",
+        "top": "gakaisflighttable:blocks/flight_table_top",
+        "side": "gakaisflighttable:blocks/flight_table_side"
+    }
+}
