@@ -1,5 +1,6 @@
 package de.gakai.flighttable;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,14 +10,19 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+
+import org.apache.commons.lang3.StringUtils;
+
 import de.gakai.flighttable.gui.GuiHandler;
 
 @Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)
@@ -27,8 +33,9 @@ public class FlightTableMod
     /** constants ********************************************************************************/
 
     public static final String MODID = "GakaisFlightTable";
-    public static final String VERSION = "1.0";
+    public static final String VERSION = "1.1";
     public static final String CONF_CAT = "FlightTable";
+    private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
 
     @Instance(MODID)
     public static FlightTableMod instance;
@@ -61,6 +68,19 @@ public class FlightTableMod
     /** init *************************************************************************************/
 
     @EventHandler
+    public void preInit(FMLPreInitializationEvent event)
+    {
+        Configuration config = new Configuration(new File("config/FlightTable.cfg"), true);
+        TileEntityFlightTable.POWER_PER_PLAYER = config.get(CONF_CAT, "PowerPerPlayer", 10).getInt();
+        TileEntityFlightTable.POWER_PER_TICK = config.get(CONF_CAT, "PowerPerTick", 1).getInt();
+        TileEntityFlightTable.POWER_PER_UPGRADE = config.get(CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
+        TileEntityFlightTable.RANGE_BASE = config.get(CONF_CAT, "BaseRange", 8).getInt();
+        TileEntityFlightTable.RANGE_PER_UPGRADE = config.get(CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
+        TileEntityFlightTable.SHAPE = Shape.valueOf(config.get(CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
+        config.save();
+    }
+
+    @EventHandler
     public void init(FMLInitializationEvent event)
     {
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
@@ -70,8 +90,6 @@ public class FlightTableMod
         GameRegistry.registerItem(redstoneFeather, "redstone_feather");
         GameRegistry.registerItem(creativeFeather, "creative_feather");
         GameRegistry.registerBlock(flightTable, "flight_table");
-
-        proxy.init();
 
         GameRegistry.addShapedRecipe(new ItemStack(flightTable), //
                 "dod", //
@@ -91,6 +109,8 @@ public class FlightTableMod
         fuels.put(Items.feather, 12000);
         fuels.put(redstoneFeather, 48000);
         fuels.put(creativeFeather, 1200);
+
+        proxy.init();
     }
 
     /** getter ***********************************************************************************/
