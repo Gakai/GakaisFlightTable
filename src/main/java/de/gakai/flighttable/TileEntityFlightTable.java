@@ -282,7 +282,6 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
 
         power = data.getInteger("fuel");
         powered = data.getBoolean("powered");
-        System.out.println("Client: " + inventory[1]);
     }
 
     @Override
