@@ -1,5 +1,6 @@
 package de.gakai.flighttable;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,11 +10,16 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.config.Configuration;
+
+import org.apache.commons.lang3.StringUtils;
+
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import de.gakai.flighttable.gui.GuiHandler;
@@ -29,6 +35,7 @@ public class FlightTableMod
     public static final String VERSION = "1.0";
     public static final String ASSETS = "flighttable";
     public static final String CONF_CAT = "FlightTable";
+    private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
 
     @Instance(MODID)
     public static FlightTableMod instance;
@@ -58,6 +65,19 @@ public class FlightTableMod
     private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
 
     /** init *************************************************************************************/
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event)
+    {
+        Configuration config = new Configuration(new File("config/FlightTable.cfg"), true);
+        TileEntityFlightTable.POWER_PER_PLAYER = config.get(CONF_CAT, "PowerPerPlayer", 10).getInt();
+        TileEntityFlightTable.POWER_PER_TICK = config.get(CONF_CAT, "PowerPerTick", 1).getInt();
+        TileEntityFlightTable.POWER_PER_UPGRADE = config.get(CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
+        TileEntityFlightTable.RANGE_BASE = config.get(CONF_CAT, "BaseRange", 8).getInt();
+        TileEntityFlightTable.RANGE_PER_UPGRADE = config.get(CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
+        TileEntityFlightTable.SHAPE = Shape.valueOf(config.get(CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
+        config.save();
+    }
 
     @EventHandler
     public void init(FMLInitializationEvent event)

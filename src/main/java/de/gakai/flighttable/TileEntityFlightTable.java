@@ -1,6 +1,5 @@
 package de.gakai.flighttable;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -20,12 +19,8 @@ import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Vec3;
-import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
-
-import org.apache.commons.lang3.StringUtils;
-
 import cofh.api.energy.IEnergyReceiver;
 
 public class TileEntityFlightTable extends TileEntity implements ISidedInventory, IEnergyReceiver
@@ -33,37 +28,21 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
 
     /** constants ********************************************************************************/
 
+    public static int RANGE_BASE;
+    public static int POWER_PER_PLAYER;
+    public static int POWER_PER_TICK;
+    public static double RANGE_PER_UPGRADE;
+    public static double POWER_PER_UPGRADE;
     public static final int MAX_POWER = 50000;
-    public static final int RANGE_BASE;
-    public static final int POWER_PER_PLAYER;
-    public static final int POWER_PER_TICK;
-    public static final double RANGE_PER_UPGRADE;
-    public static final double POWER_PER_UPGRADE;
-    public static final Shape shape;
     public static final int MAX_TICK_POWER_RECEIVE = 800;
-
-    private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
+    public static Shape SHAPE;
 
     private static final Set<EntityPlayer> affectedPlayers = Collections.newSetFromMap(new WeakHashMap<EntityPlayer, Boolean>());
     private static final Map<EntityPlayer, Set<TileEntityFlightTable>> playerAffectingBlocks = new WeakHashMap<EntityPlayer, Set<TileEntityFlightTable>>();
 
-    /** static initializer ***********************************************************************/
-
-    static
-    {
-        Configuration config = new Configuration(new File("config/Levitator.cfg"), true);
-        POWER_PER_PLAYER = config.get(FlightTableMod.CONF_CAT, "PowerPerPlayer", 10).getInt();
-        POWER_PER_TICK = config.get(FlightTableMod.CONF_CAT, "PowerPerTick", 1).getInt();
-        POWER_PER_UPGRADE = config.get(FlightTableMod.CONF_CAT, "PowerPerUpgrade", 0.0625).getDouble();
-        RANGE_BASE = config.get(FlightTableMod.CONF_CAT, "BaseRange", 8).getInt();
-        RANGE_PER_UPGRADE = config.get(FlightTableMod.CONF_CAT, "RangePerUpgrade", 0.5).getDouble();
-        shape = Shape.valueOf(config.get(FlightTableMod.CONF_CAT, "shape", Shape.SPHERE.toString(), SHAPES_HELP).getString().toUpperCase());
-        config.save();
-    }
-
     /** fields ***********************************************************************************/
 
-    private ItemStack[] inventory = new ItemStack[2];
+    private final ItemStack[] inventory = new ItemStack[2];
 
     private int power = 0;
     private int powerReceivablePerTick = 0;
@@ -129,7 +108,7 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
                 EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
 
-                if (isActive() && shape.contains(blockPos, getRadius(), playerPos))
+                if (isActive() && SHAPE.contains(blockPos, getRadius(), playerPos))
                 {
                     if (player.capabilities.isFlying)
                         incPower(getPowerConsumptionPerPlayer(), true);
@@ -144,7 +123,6 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
             // Process refill
             boolean doUpdate = false;
             if (inventory[0] != null)
-            {
                 if (inventory[0].getItem() != FlightTableMod.creativeFeather)
                 {
                     Integer fuelValue = FlightTableMod.getFuelValue(inventory[0]);
@@ -159,7 +137,6 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
                 }
                 else
                     power = MAX_POWER;
-            }
             if (doUpdate || worldObj.getWorldInfo().getWorldTotalTime() % 40 == 0)
                 worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
         }
@@ -170,7 +147,7 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
             {
                 EntityPlayer player = (EntityPlayer) o;
                 Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
-                if (isActive() && shape.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
+                if (isActive() && SHAPE.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
                     incPower(getPowerConsumptionPerPlayer(), true);
             }
             if (isActive())
@@ -279,13 +256,11 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
         for (int i = 0; i < getSizeInventory(); i++)
         {
             ItemStack itemStack = inventory[i];
+            NBTTagCompound slotTag = new NBTTagCompound();
+            slotTag.setByte("slot", (byte) i);
             if (itemStack != null)
-            {
-                NBTTagCompound slotTag = new NBTTagCompound();
-                slotTag.setByte("slot", (byte) i);
                 itemStack.writeToNBT(slotTag);
-                invList.appendTag(slotTag);
-            }
+            invList.appendTag(slotTag);
         }
         data.setTag("inv", invList);
         data.setInteger("fuel", power);
@@ -302,12 +277,12 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
         {
             NBTTagCompound slotTag = tagList.getCompoundTagAt(i);
             byte slot = slotTag.getByte("slot");
-            if (slot >= 0 && slot < getSizeInventory())
-                inventory[slot] = ItemStack.loadItemStackFromNBT(slotTag);
+            inventory[slot] = !slotTag.hasKey("id") ? null : ItemStack.loadItemStackFromNBT(slotTag);
         }
 
         power = data.getInteger("fuel");
         powered = data.getBoolean("powered");
+        System.out.println("Client: " + inventory[1]);
     }
 
     @Override
@@ -452,7 +427,8 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
         {
             power += received;
             powerReceivablePerTick -= received;
-            worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+            if (worldObj.getWorldInfo().getWorldTotalTime() % 5 == 0)
+                worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
         }
         return received;
     }
