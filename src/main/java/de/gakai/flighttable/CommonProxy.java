@@ -1,6 +1,8 @@
 package de.gakai.flighttable;
 
-public abstract class CommonProxy
+public class CommonProxy
 {
-    public abstract void init();
+    public void init()
+    {
+    }
 }
