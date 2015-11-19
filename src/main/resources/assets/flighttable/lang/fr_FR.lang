@@ -1,0 +1,5 @@
+tile.flighttable.name=Flight Table
+item.redstoneFeather.name=Plume en redstone
+item.creativeFeather.name=Plume créative
+gui.flighttable=Table de vol
+gui.flighttable.percent=%d%%
