@@ -10,13 +10,13 @@ import de.gakai.flighttable.TileEntityFlightTable;
 
 public class ContainerFlightTable extends Container
 {
-    private TileEntityFlightTable flightTableEntity;
+    private TileEntityFlightTable entity;
 
     /** constructor ******************************************************************************/
 
     public ContainerFlightTable(InventoryPlayer playerInventory, TileEntityFlightTable entity)
     {
-        flightTableEntity = entity;
+        this.entity = entity;
         // fuel
         addSlotToContainer(new Slot(entity, 0, 89, 38));
         // upgrades
@@ -40,7 +40,7 @@ public class ContainerFlightTable extends Container
     @Override
     public boolean canInteractWith(EntityPlayer player)
     {
-        return flightTableEntity.isUseableByPlayer(player);
+        return entity.isUseableByPlayer(player);
     }
 
     @Override
@@ -54,16 +54,16 @@ public class ContainerFlightTable extends Container
 
         // merges the item into player inventory since its in the tileEntity
         ItemStack stackInSlot = slotObject.getStack();
-        if (slot < flightTableEntity.getSizeInventory())
+        if (slot < entity.getSizeInventory())
         {
-            if (!this.mergeItemStack(stackInSlot, flightTableEntity.getSizeInventory(),
-                    player.inventory.mainInventory.length + flightTableEntity.getSizeInventory(), true))
+            if (!this.mergeItemStack(stackInSlot, entity.getSizeInventory(),
+                player.inventory.mainInventory.length + entity.getSizeInventory(), true))
                 return null;
         }
         // places it into the tileEntity is possible since its in the player inventory
         else
         {
-            if (!this.mergeItemStack(stackInSlot, 0, flightTableEntity.getSizeInventory(), false))
+            if (!this.mergeItemStack(stackInSlot, 0, entity.getSizeInventory(), false))
                 return null;
         }
 

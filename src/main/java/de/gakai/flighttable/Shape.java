@@ -12,7 +12,7 @@ public enum Shape
         case SPHERE:
             return center.distanceTo(point) < size;
         case CIRCLE:
-            point.yCoord = center.yCoord;
+            point = new Vec3(point.xCoord, center.yCoord, point.zCoord);
             return center.distanceTo(point) < size;
         case CUBE:
             return Math.abs(center.xCoord - point.xCoord) < size && //

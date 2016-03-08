@@ -9,6 +9,8 @@ import java.util.WeakHashMap;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -17,13 +19,14 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.server.gui.IUpdatePlayerListBox;
+import net.minecraft.tileentity.TileEntityLockable;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.common.util.ForgeDirection;
-import cofh.api.energy.IEnergyReceiver;
+import de.gakai.flighttable.gui.ContainerFlightTable;
 
-public class TileEntityFlightTable extends TileEntity implements ISidedInventory, IEnergyReceiver
+public class TileEntityFlightTable extends TileEntityLockable implements IUpdatePlayerListBox, ISidedInventory
 {
 
     /** constants ********************************************************************************/
@@ -97,16 +100,16 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
     /** TileEntity *******************************************************************************/
 
     @Override
-    public void updateEntity()
+    public void update()
     {
         powerReceivablePerTick = MAX_TICK_POWER_RECEIVE;
         if (!worldObj.isRemote)
         {
-            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5);
+            Vec3 blockPos = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
             for (Object o : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
             {
                 EntityPlayer player = (EntityPlayer) o;
-                Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
+                Vec3 playerPos = new Vec3(player.posX, player.posY, player.posZ);
 
                 if (isActive() && SHAPE.contains(blockPos, getRadius(), playerPos))
                 {
@@ -138,15 +141,15 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
                 else
                     power = MAX_POWER;
             if (doUpdate || worldObj.getWorldInfo().getWorldTotalTime() % 40 == 0)
-                worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+                worldObj.markBlockForUpdate(pos);
         }
         else
         {
-            Vec3 blockPos = Vec3.createVectorHelper(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5);
+            Vec3 blockPos = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
             for (Object o : Minecraft.getMinecraft().theWorld.playerEntities)
             {
                 EntityPlayer player = (EntityPlayer) o;
-                Vec3 playerPos = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
+                Vec3 playerPos = new Vec3(player.posX, player.posY, player.posZ);
                 if (isActive() && SHAPE.contains(blockPos, getRadius(), playerPos) && player.capabilities.isFlying)
                     incPower(getPowerConsumptionPerPlayer(), true);
             }
@@ -198,11 +201,11 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
             // Remove this flightTable from the set
             affectingBlocks.remove(this);
 
-            // If no more levitators affect the player, start disabling flying
+            // If no more flight tables affect the player, start disabling flying
             if (affectingBlocks.isEmpty())
                 if (affectedPlayers.contains(player))
                 {
-                    // Player was set into fly mode by levitators
+                    // Player was set into fly mode by flight tables
                     if (!player.capabilities.isCreativeMode)
                         player.capabilities.isFlying = false;
                     if (player.onGround || !safe)
@@ -289,13 +292,13 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
     {
         NBTTagCompound tagCompound = new NBTTagCompound();
         writeToNBT(tagCompound);
-        return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tagCompound);
+        return new S35PacketUpdateTileEntity(pos, 1, tagCompound);
     }
 
     @Override
     public void onDataPacket(NetworkManager networkManager, S35PacketUpdateTileEntity packet)
     {
-        readFromNBT(packet.func_148857_g());
+        readFromNBT(packet.getNbtCompound());
     }
 
     /** IInventory *******************************************************************************/
@@ -313,7 +316,7 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
     }
 
     @Override
-    public boolean canInsertItem(int slot, ItemStack item, int side)
+    public boolean canInsertItem(int slot, ItemStack item, EnumFacing side)
     {
         return isItemValidForSlot(slot, item);
     }
@@ -365,13 +368,13 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
     }
 
     @Override
-    public String getInventoryName()
+    public String getName()
     {
-        return null;
+        return "tile.flighttable.name";
     }
 
     @Override
-    public boolean hasCustomInventoryName()
+    public boolean hasCustomName()
     {
         return false;
     }
@@ -389,59 +392,60 @@ public class TileEntityFlightTable extends TileEntity implements ISidedInventory
     }
 
     @Override
-    public void openInventory()
+    public void openInventory(EntityPlayer player)
     {
     }
 
     @Override
-    public void closeInventory()
+    public void closeInventory(EntityPlayer player)
     {
     }
 
     @Override
-    public int[] getAccessibleSlotsFromSide(int side)
+    public int[] getSlotsForFace(EnumFacing side)
     {
-        return new int[] { side == ForgeDirection.UP.ordinal() ? 1 : 0 };
+        return new int[] { side == EnumFacing.UP ? 1 : 0 };
     }
 
     @Override
-    public boolean canExtractItem(int slot, ItemStack item, int site)
+    public boolean canExtractItem(int slot, ItemStack item, EnumFacing side)
     {
         return true;
     }
 
-    /** IEnergyConnection (RF) *******************************************************************/
-
     @Override
-    public boolean canConnectEnergy(ForgeDirection from)
+    public int getField(int id)
     {
-        return from != ForgeDirection.UP;
+        return 0;
     }
 
     @Override
-    public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate)
+    public void setField(int id, int value)
     {
-        int received = Math.min(powerReceivablePerTick, Math.min(MAX_POWER - power, maxReceive));
-        if (!simulate && received > 0)
-        {
-            power += received;
-            powerReceivablePerTick -= received;
-            if (worldObj.getWorldInfo().getWorldTotalTime() % 5 == 0)
-                worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
-        }
-        return received;
     }
 
     @Override
-    public int getEnergyStored(ForgeDirection from)
+    public int getFieldCount()
     {
-        return power;
+        return 0;
     }
 
     @Override
-    public int getMaxEnergyStored(ForgeDirection from)
+    public void clear()
     {
-        return MAX_POWER;
+        inventory = new ItemStack[2];
+        power = 0;
     }
 
+    @Override
+    public Container createContainer(InventoryPlayer playerInventory, EntityPlayer player)
+    {
+        return new ContainerFlightTable(playerInventory, this);
+    }
+
+    @Override
+    public String getGuiID()
+    {
+        return "flighttable:flighttable";
+    }
 }

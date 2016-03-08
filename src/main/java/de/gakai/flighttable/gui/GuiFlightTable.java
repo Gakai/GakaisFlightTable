@@ -1,7 +1,7 @@
 package de.gakai.flighttable.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 
@@ -30,11 +30,11 @@ public class GuiFlightTable extends GuiContainer
 
     /** constructor ******************************************************************************/
 
-    public GuiFlightTable(InventoryPlayer playerInventory, TileEntityFlightTable levitatorEntity)
+    public GuiFlightTable(EntityPlayer player, TileEntityFlightTable entity)
     {
-        super(new ContainerFlightTable(playerInventory, levitatorEntity));
-        entity = levitatorEntity;
-        texture = new ResourceLocation(FlightTableMod.ASSETS, "textures/gui/flight_table.png");
+        super(entity.createContainer(player.inventory, player));
+        this.entity = entity;
+        texture = new ResourceLocation(FlightTableMod.MODID, "textures/gui/flight_table.png");
     }
 
     /** GuiContainer *****************************************************************************/
@@ -50,10 +50,10 @@ public class GuiFlightTable extends GuiContainer
         int powerScaled = percent * POWER_HEIGHT / 100;
         drawTexturedModalRect(POWER_X, BOTTOM_POWER_Y - powerScaled, POWER_U, POWER_V, POWER_WIDTH, powerScaled);
 
-        String header = StatCollector.translateToLocal("gui.flighttable");
+        String header = StatCollector.translateToLocal("gui.flight_table");
         fontRendererObj.drawString(header, (xSize - fontRendererObj.getStringWidth(header)) / 2 + 10, 6, 4210752);
 
-        String energy = String.format(StatCollector.translateToLocal("gui.flighttable.percent"), percent);
+        String energy = String.format(StatCollector.translateToLocal("gui.flight_table.percent"), percent);
         fontRendererObj.drawString(energy, 30, 15, 4210752);
 
         String range = String.format("%.1f", entity.getRadius());
