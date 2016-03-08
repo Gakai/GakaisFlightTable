@@ -26,11 +26,12 @@ import org.apache.commons.lang3.StringUtils;
 import de.gakai.flighttable.blocks.BlockFlightTable;
 import de.gakai.flighttable.blocks.TileEntityFlightTable;
 import de.gakai.flighttable.gui.GuiHandler;
+import de.gakai.flighttable.items.ItemCreativeFeather;
+import de.gakai.flighttable.items.ItemRedstoneFeather;
 
 @Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)
 public class FlightTableMod
 {
-    // XXX: Shift-right clicking with a feather adds it into the container, if it fits
 
     /** constants ********************************************************************************/
 
@@ -44,27 +45,13 @@ public class FlightTableMod
     @Instance(MODID)
     public static FlightTableMod instance;
 
-    public static final Block flightTable = new BlockFlightTable();
-
-    public static final Item redstoneFeather = new Item() //
-            .setFull3D() //
-            .setUnlocalizedName("redstone_feather") //
-            .setCreativeTab(CreativeTabs.tabTransport);
-
-    public static final Item creativeFeather = new Item() {
-        @Override
-        public boolean hasEffect(ItemStack par1ItemStack)
-        {
-            return true;
-        };
-    }.setFull3D() //
-            .setUnlocalizedName("creative_feather") //
-            .setCreativeTab(CreativeTabs.tabTransport) //
-            .setMaxStackSize(1);
+    public static final BlockFlightTable flightTable = new BlockFlightTable();
+    public static final ItemRedstoneFeather redstoneFeather = new ItemRedstoneFeather();
+    public static final ItemCreativeFeather creativeFeather = new ItemCreativeFeather();
 
     private static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
-    private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
+    private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone); //TODO: config
 
     @SidedProxy(serverSide = "de.gakai.flighttable.CommonProxy", clientSide = "de.gakai.flighttable.ClientProxy")
     private static CommonProxy proxy;
@@ -95,19 +82,19 @@ public class FlightTableMod
         GameRegistry.registerItem(creativeFeather, "creative_feather");
         GameRegistry.registerBlock(flightTable, "flight_table");
 
-        GameRegistry.addShapedRecipe(new ItemStack(flightTable), //
-                "dod", //
-                "ogo", //
-                "dod", //
-                'd', Items.diamond, //
-                'o', Blocks.obsidian, //
+        GameRegistry.addShapedRecipe(new ItemStack(flightTable), 
+                "dod", 
+                "ogo", 
+                "dod", 
+                'd', Items.diamond, 
+                'o', Blocks.obsidian, 
                 'g', Blocks.redstone_lamp);
 
-        GameRegistry.addShapedRecipe(new ItemStack(redstoneFeather), //
-                " r ", //
-                "rfr", //
-                " r ", //
-                'f', Items.feather, //
+        GameRegistry.addShapedRecipe(new ItemStack(redstoneFeather), 
+                " r ", 
+                "rfr", 
+                " r ", 
+                'f', Items.feather, 
                 'r', Items.redstone);
 
         fuels.put(Items.feather, 12000);
