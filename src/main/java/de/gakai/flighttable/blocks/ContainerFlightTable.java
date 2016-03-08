@@ -1,4 +1,4 @@
-package de.gakai.flighttable.gui;
+package de.gakai.flighttable.blocks;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -6,7 +6,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import de.gakai.flighttable.FlightTableMod;
-import de.gakai.flighttable.TileEntityFlightTable;
 
 public class ContainerFlightTable extends Container
 {

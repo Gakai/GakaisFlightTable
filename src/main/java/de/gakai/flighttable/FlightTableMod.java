@@ -23,6 +23,8 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.gakai.flighttable.blocks.BlockFlightTable;
+import de.gakai.flighttable.blocks.TileEntityFlightTable;
 import de.gakai.flighttable.gui.GuiHandler;
 
 @Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)

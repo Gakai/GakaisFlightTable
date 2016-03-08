@@ -1,4 +1,4 @@
-package de.gakai.flighttable;
+package de.gakai.flighttable.blocks;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,11 +24,11 @@ import net.minecraft.tileentity.TileEntityLockable;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.Constants;
-import de.gakai.flighttable.gui.ContainerFlightTable;
+import de.gakai.flighttable.FlightTableMod;
+import de.gakai.flighttable.Shape;
 
 public class TileEntityFlightTable extends TileEntityLockable implements IUpdatePlayerListBox, ISidedInventory
 {
-
     /** constants ********************************************************************************/
 
     public static int RANGE_BASE;

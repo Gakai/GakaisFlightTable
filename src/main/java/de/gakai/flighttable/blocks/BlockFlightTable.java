@@ -1,7 +1,8 @@
-package de.gakai.flighttable;
+package de.gakai.flighttable.blocks;
 
 import java.util.Random;
 
+import de.gakai.flighttable.FlightTableMod;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.MapColor;
