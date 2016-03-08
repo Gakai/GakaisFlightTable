@@ -104,7 +104,8 @@ public class FlightTableMod
         proxy.init();
     }
 
-    /** getter ***********************************************************************************/
+    
+    /** getters ***********************************************************************************/
 
     public static boolean isItemFuel(ItemStack item)
     {
