@@ -82,19 +82,19 @@ public class FlightTableMod
         GameRegistry.registerItem(creativeFeather, "creative_feather");
         GameRegistry.registerBlock(flightTable, "flight_table");
 
-        GameRegistry.addShapedRecipe(new ItemStack(flightTable), 
-                "dod", 
-                "ogo", 
-                "dod", 
-                'd', Items.diamond, 
-                'o', Blocks.obsidian, 
+        GameRegistry.addShapedRecipe(new ItemStack(flightTable), //
+                "dod", //
+                "ogo", //
+                "dod", //
+                'd', Items.diamond, //
+                'o', Blocks.obsidian, //
                 'g', Blocks.redstone_lamp);
 
-        GameRegistry.addShapedRecipe(new ItemStack(redstoneFeather), 
-                " r ", 
-                "rfr", 
-                " r ", 
-                'f', Items.feather, 
+        GameRegistry.addShapedRecipe(new ItemStack(redstoneFeather), //
+                " r ", //
+                "rfr", //
+                " r ", //
+                'f', Items.feather, //
                 'r', Items.redstone);
 
         fuels.put(Items.feather, 12000);
