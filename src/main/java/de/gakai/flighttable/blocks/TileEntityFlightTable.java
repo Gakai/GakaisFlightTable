@@ -1,4 +1,4 @@
-package de.gakai.flighttable;
+package de.gakai.flighttable.blocks;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,11 +24,11 @@ import net.minecraft.tileentity.TileEntityLockable;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.Constants;
-import de.gakai.flighttable.gui.ContainerFlightTable;
+import de.gakai.flighttable.FlightTableMod;
+import de.gakai.flighttable.Shape;
 
 public class TileEntityFlightTable extends TileEntityLockable implements IUpdatePlayerListBox, ISidedInventory
 {
-
     /** constants ********************************************************************************/
 
     public static int RANGE_BASE;
@@ -45,7 +45,7 @@ public class TileEntityFlightTable extends TileEntityLockable implements IUpdate
 
     /** fields ***********************************************************************************/
 
-    private ItemStack[] inventory = new ItemStack[2];
+    private final ItemStack[] inventory = new ItemStack[2];
 
     private int power = 0;
     private int powerReceivablePerTick = 0;
@@ -126,7 +126,6 @@ public class TileEntityFlightTable extends TileEntityLockable implements IUpdate
             // Process refill
             boolean doUpdate = false;
             if (inventory[0] != null)
-            {
                 if (inventory[0].getItem() != FlightTableMod.creativeFeather)
                 {
                     Integer fuelValue = FlightTableMod.getFuelValue(inventory[0]);
@@ -141,7 +140,6 @@ public class TileEntityFlightTable extends TileEntityLockable implements IUpdate
                 }
                 else
                     power = MAX_POWER;
-            }
             if (doUpdate || worldObj.getWorldInfo().getWorldTotalTime() % 40 == 0)
                 worldObj.markBlockForUpdate(pos);
         }

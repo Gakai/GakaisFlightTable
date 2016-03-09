@@ -8,7 +8,7 @@ import net.minecraft.util.StatCollector;
 import org.lwjgl.opengl.GL11;
 
 import de.gakai.flighttable.FlightTableMod;
-import de.gakai.flighttable.TileEntityFlightTable;
+import de.gakai.flighttable.blocks.TileEntityFlightTable;
 
 public class GuiFlightTable extends GuiContainer
 {

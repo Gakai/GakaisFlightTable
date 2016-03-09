@@ -23,44 +23,35 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.gakai.flighttable.blocks.BlockFlightTable;
+import de.gakai.flighttable.blocks.TileEntityFlightTable;
 import de.gakai.flighttable.gui.GuiHandler;
+import de.gakai.flighttable.items.ItemCreativeFeather;
+import de.gakai.flighttable.items.ItemRedstoneFeather;
 
 @Mod(modid = FlightTableMod.MODID, version = FlightTableMod.VERSION)
 public class FlightTableMod
 {
-    // XXX: Shift-right clicking with a feather adds it into the container, if it fits
 
     /** constants ********************************************************************************/
 
     public static final String MODID = "GakaisFlightTable";
+    public static final String ASSETS = "flighttable";
     public static final String VERSION = "1.1.1";
     public static final String CONF_CAT = "FlightTable";
+	
     private static final String SHAPES_HELP = "Available shapes: " + StringUtils.join(Shape.values(), ", ");
 
     @Instance(MODID)
     public static FlightTableMod instance;
 
-    public static final Block flightTable = new BlockFlightTable();
-
-    public static final Item redstoneFeather = new Item() //
-            .setFull3D() //
-            .setUnlocalizedName("redstone_feather") //
-            .setCreativeTab(CreativeTabs.tabTransport);
-
-    public static final Item creativeFeather = new Item() {
-        @Override
-        public boolean hasEffect(ItemStack par1ItemStack)
-        {
-            return true;
-        };
-    }.setFull3D() //
-            .setUnlocalizedName("creative_feather") //
-            .setCreativeTab(CreativeTabs.tabTransport) //
-            .setMaxStackSize(1);
+    public static final BlockFlightTable flightTable = new BlockFlightTable();
+    public static final ItemRedstoneFeather redstoneFeather = new ItemRedstoneFeather();
+    public static final ItemCreativeFeather creativeFeather = new ItemCreativeFeather();
 
     private static final Map<Item, Integer> fuels = new HashMap<Item, Integer>();
 
-    private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone);
+    private static final Item upgradeItem = Item.getItemFromBlock(Blocks.glowstone); //TODO: config
 
     @SidedProxy(serverSide = "de.gakai.flighttable.CommonProxy", clientSide = "de.gakai.flighttable.ClientProxy")
     private static CommonProxy proxy;
@@ -113,7 +104,8 @@ public class FlightTableMod
         proxy.init();
     }
 
-    /** getter ***********************************************************************************/
+    
+    /** getters ***********************************************************************************/
 
     public static boolean isItemFuel(ItemStack item)
     {
